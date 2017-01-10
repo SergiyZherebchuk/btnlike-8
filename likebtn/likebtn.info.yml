@@ -1,0 +1,12 @@
+name: 'LikeBtn'
+description: 'Provides a fully customizable like button widget.'
+type: module
+core: 8.x
+version: 8.x-dev
+package: 'Voting'
+
+configure: likebtn.admin
+
+dependencies:
+  - field
+  - votingapi
