@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Component\Utility\Html;
 
 // Module name.
 define('LIKEBTN_MODULE_NAME', 'likebtn');
@@ -180,9 +181,9 @@ define('LIKEBTN_VOTING_VOTE_SOURCE', 'entity');
 
 function likebtn_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    case 'admin/help#likebtn':
+    case 'help.page.likebtn':
       $output = file_get_contents(drupal_get_path('module', 'likebtn') . '/README.txt');
-      return '<pre>' . check_plain($output) . '</pre>';
+      return '<pre>' . Html::escape($output) . '</pre>';
   }
 }
 
