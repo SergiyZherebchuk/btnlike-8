@@ -332,6 +332,7 @@ function _likebtn_get_markup($element_name, $element_id, $values = NULL, $wrap =
   $prepared_settings = array();
 
   // Run sunchronization.
+
   $likebtn = new LikeBtn();
   $likebtn->runSyncVotes();
 

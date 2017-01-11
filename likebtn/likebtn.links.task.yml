@@ -1,0 +1,9 @@
+likebtn.admin_config_tab:
+  route_name: likebtn.admin
+  title: 'General Setting'
+  base_route: likebtn.admin_config_tab
+
+likebtn.likebtn_settings_config_tab:
+  route_name: likebtn.likebtn_settings
+  title: 'LikeBtn Setting'
+  base_route: likebtn.admin_config_tab

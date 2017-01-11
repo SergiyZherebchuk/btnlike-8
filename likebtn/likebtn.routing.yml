@@ -1,23 +1,14 @@
 likebtn.admin:
   path: '/admin/config/services/likebtn'
   defaults:
-    _title: 'LikeBtn configuration'
-    _description: 'Configuration for LikeBtn module'
-    _form: '\Drupal\likebtn\Form\LikebtnSettingsForm'
+    _form: '\Drupal\likebtn\Form\GeneralSettingsForm'
   requirements:
     _permission: 'administer site configuration'
 
-likebtn.general-settings:
-  path: '/admin/config/services/likebtn/general-settings'
-  default:
-    _title: 'General settings'
-    _controller: '\Drupal\likebtn\Controller\LikebtnConfigure::generalSettings'
-
-likebtn.likebtn-settings:
+likebtn.likebtn_settings:
   path: '/admin/config/services/likebtn/likebtn-settings'
   defaults:
-    _title: 'LikeBtn settings'
-    _controller: '\Drupal\likebtn\Controller\LikebtnConfigure::likebtnSettings'
+    _form: '\Drupal\likebtn\Form\LikebtnSettingsForm'
   requirements:
     _permission: 'administer site configuration'
 
