@@ -10,8 +10,8 @@ namespace Drupal\likebtn\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\node\Entity\NodeType;
-use Drupal\Core\Url;
+use Drupal\Core\Entity\Entity;
+use Drupal\likebtn\LikeBtn;
 
 class LikebtnSettingsForm extends ConfigFormBase {
 
@@ -27,7 +27,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state) {
     global $language;
-    $config = $this->config('likebtn-settings');
+    $config = $this->config('likebtn.settings');
 
     $form = array();
 
@@ -37,25 +37,16 @@ class LikebtnSettingsForm extends ConfigFormBase {
       $likebtn_website_locale = 'en';
     }
 
-    $form['#attached']['js'][] = array(
-      'type' => 'file',
-      'data' => '//likebtn.com/' . $likebtn_website_locale . '/js/donate_generator.js', array('type' => 'external', 'scope' => 'footer')
-    );
-
-
     $likebtn_settings_lang_options['auto'] = "auto - " . t("Detect from client browser");
     $langs = unserialize(LIKEBTN_LANGS);
     foreach ($langs as $lang_code => $lang_name) {
       $likebtn_settings_lang_options[$lang_code] = $lang_name;
     }
-    //}
 
-    // Get styles.
     $likebtn_styles = $config->get('settings.likebtn_styles') ?: array();
 
     $likebtn_settings_style_options = array();
     if (!$likebtn_styles) {
-      // Styles have not been loaded using API yet, load default languages.
       $likebtn_styles = unserialize(LIKEBTN_STYLES);
     }
     foreach ($likebtn_styles as $likebtn_style) {
@@ -76,10 +67,9 @@ class LikebtnSettingsForm extends ConfigFormBase {
     );
 
     $form['likebtn_extra_display_options'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Extra display options'),
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
 
     // Settings must be under subelement to be properly flattened for field.
@@ -87,16 +77,14 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'textfield',
       '#title'         => t('Insert HTML before'),
       '#description'   => t('HTML code to insert before the Like Button'),
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_html_before']) ?
-        $default_values['likebtn_html_before'] : '') : $config->get('settings.likebtn_html_before') ?: ''),
+      '#default_value' => $config->get('settings.likebtn_html_before'),
     );
 
     $form['likebtn_extra_display_options']['likebtn_html_after'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Insert HTML after'),
       '#description'   => t('HTML code to insert after the Like Button'),
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_html_after']) ?
-        $default_values['likebtn_html_after'] : '') : $config->get('settings.likebtn_html_after') ?: ''),
+      '#default_value' => $config->get('settings.likebtn_html_after'),
     );
 
     $form['likebtn_extra_display_options']['likebtn_alignment'] = array(
@@ -106,131 +94,113 @@ class LikebtnSettingsForm extends ConfigFormBase {
         'left' => t('Left'),
         'center' => t('Center'),
         'right' => t('Right')),
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_alignment']) ?
-        $default_values['likebtn_alignment'] : 'left') : $config->get('settings.likebtn_alignment') ?: 'left'),
+      '#default_value' => $config->get('settings.likebtn_alignment'),
     );
 
     $form['likebtn_settings_style_language'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Style and language'),
       '#weight'      => 4,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
     $form['likebtn_settings_style_language']['likebtn_settings_style'] = array(
       '#type'          => 'select',
       '#title'         => t('Style'),
       '#description'   => 'style',
       '#options'       => $likebtn_settings_style_options,
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_style']) ?
-        $default_values['likebtn_settings_style'] : 'white') : $config->get('settings.likebtn_settings.style')),
+      '#default_value' => $config->get('settings.likebtn_settings.style'),
     );
     $form['likebtn_settings_style_language']['likebtn_settings_lang'] = array(
       '#type'          => 'select',
       '#title'         => t('Language'),
       '#description'   => 'lang',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_lang']) ?
-        $default_values['likebtn_settings_lang'] : 'en') : $config->get('settings.likebtn_settings.lang')),
+      '#default_value' => $config->get('settings.likebtn_settings.lang'),
       '#options'       => $likebtn_settings_lang_options,
     );
 
     $form['likebtn_settings_appearance_behaviour'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Appearance and behaviour'),
       '#weight'      => 5,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_show_like_label'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show "like"-label'),
       '#description'   => 'show_like_label',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_show_like_label']) ?
-        $default_values['likebtn_settings_show_like_label'] : TRUE) : $config->get('settings.likebtn_settings.show_like_label')),
+      '#default_value' => $config->get('settings.likebtn_settings.show_like_label'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_show_dislike_label'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show "dislike"-label'),
       '#description'   => 'show_dislike_label',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_show_dislike_label']) ?
-        $default_values['likebtn_settings_show_dislike_label'] : FALSE) : $config->get('settings.likebtn_settings.show_dislike_label')),
+      '#default_value' => $config->get('settings.likebtn_settings.show_dislike_label'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_popup_dislike'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show popup on disliking'),
       '#description'   => 'popup_dislike',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_dislike']) ?
-        $default_values['likebtn_settings_popup_dislike'] : FALSE) : $config->get('settings.likebtn_settings.popup_dislike')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_dislike'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_like_enabled'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show Like Button'),
       '#description'   => 'like_enabled',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_like_enabled']) ?
-        $default_values['likebtn_settings_like_enabled'] : TRUE) : $config->get('settings.likebtn_settings.like_enabled')),
+      '#default_value' => $config->get('settings.likebtn_settings.like_enabled'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_icon_like_show'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show like icon'),
       '#description'   => 'icon_like_show',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_icon_like_show']) ?
-        $default_values['likebtn_settings_icon_like_show'] : TRUE) : $config->get('settings.likebtn_settings.icon_like_show')),
+      '#default_value' => $config->get('settings.likebtn_settings.icon_like_show'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_icon_dislike_show'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show dislike icon'),
       '#description'   => 'icon_dislike_show',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_icon_dislike_show']) ?
-        $default_values['likebtn_settings_icon_dislike_show'] : TRUE) : $config->get('settings.likebtn_settings.icon_dislike_show')),
+      '#default_value' => $config->get('settings.likebtn_settings.icon_dislike_show'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_lazy_load'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Lazy load - if button is outside viewport it is loaded when user scrolls to it'),
       '#description'   => 'lazy_load',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_lazy_load']) ?
-        $default_values['likebtn_settings_lazy_load'] : FALSE) : $config->get('settings.likebtn_settings.lazy_load')),
+      '#default_value' => $config->get('settings.likebtn_settings.lazy_load'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_dislike_enabled'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show Dislike Button'),
       '#description'   => 'dislike_enabled',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_dislike_enabled']) ?
-        $default_values['likebtn_settings_dislike_enabled'] : TRUE) : $config->get('settings.likebtn_settings.dislike_enabled')),
+      '#default_value' => $config->get('settings.likebtn_settings.dislike_enabled'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_display_only'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Voting is disabled, display results only'),
       '#description'   => 'display_only',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_display_only']) ?
-        $default_values['likebtn_settings_display_only'] : FALSE) : $config->get('settings.likebtn_settings.display_only')),
+      '#default_value' => $config->get('settings.likebtn_settings.display_only'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_unlike_allowed'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Allow to unlike and undislike'),
       '#description'   => 'unlike_allowed',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_unlike_allowed']) ?
-        $default_values['likebtn_settings_unlike_allowed'] : TRUE) : $config->get('settings.likebtn_settings.unlike_allowed')),
+      '#default_value' => $config->get('settings.likebtn_settings.unlike_allowed'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_like_dislike_at_the_same_time'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Allow to like and dislike at the same time'),
       '#description'   => 'like_dislike_at_the_same_time',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_like_dislike_at_the_same_time']) ?
-        $default_values['likebtn_settings_like_dislike_at_the_same_time'] : FALSE) : $config->get('settings.likebtn_settings.like_dislike_at_the_same_time')),
+      '#default_value' => $config->get('settings.likebtn_settings.like_dislike_at_the_same_time'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_revote_period'] = array(
       '#type'          => 'textfield',
       '#title'         => t('The period of time in seconds after which it is allowed to vote again'),
       '#description'   => 'revote_period',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_revote_period']) ?
-        $default_values['likebtn_settings_revote_period'] : '') : $config->get('settings.likebtn_settings.revote_period') ?: ''),
+      '#default_value' => $config->get('settings.likebtn_settings.revote_period'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_show_copyright'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show copyright link in the share popup') . ' (VIP, ULTRA)',
       '#description'   => 'show_copyright',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_show_copyright']) ?
-        $default_values['likebtn_settings_show_copyright'] : TRUE) : $config->get('settings.likebtn_settings.show_copyright')),
+      '#default_value' => $config->get('settings.likebtn_settings.show_copyright'),
       '#states' => array(
         'disabled' => array(
           array(':input[name="likebtn_plan"]' => array('value' => LIKEBTN_PLAN_FREE)),
@@ -243,15 +213,13 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'checkbox',
       '#title'         => t('Enable Google Rich Snippets'),
       '#description'   => t('<a href="https://likebtn.com/en/faq#rich_snippets" target="_blank">What are Google Rich Snippets and how do they boost traffic?</a>'),
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_rich_snippet']) ?
-        $default_values['likebtn_settings_rich_snippet'] : FALSE) : $config->get('settings.likebtn_settings.rich_snippet')),
+      '#default_value' => $config->get('settings.likebtn_settings.rich_snippet'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_popup_html'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Custom HTML to insert into the popup') . ' (PRO, VIP, ULTRA)',
       '#description'   => 'popup_html',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_html']) ?
-        $default_values['likebtn_settings_popup_html'] : '') : $config->get('settings.likebtn_settings.popup_html') ?: ''),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_html'),
       '#states' => array(
         // Enable field.
         'disabled' => array(
@@ -268,8 +236,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#maxlength'     => 5000,
       '#suffix'        => '<button onclick="likebtnDG(\'popup_donate_input\'); return false;" style="position:relative;top:-10px;">' . t('Configure donate buttons') . '</button><br/><br/>',
       '#description'   => 'popup_donate',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_donate']) ?
-        $default_values['likebtn_settings_popup_donate'] : '') : $config->get('settings.likebtn_settings.popup_donate') ?: ''),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_donate') ?: '',
       '#states' => array(
         // Enable field.
         'disabled' => array(
@@ -284,15 +251,13 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#id'            => 'popup_content_order_input',
       '#title'         => t('Order of the content in the popup'),
       '#description'   => 'popup_content_order',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_content_order']) ?
-        $default_values['likebtn_settings_popup_content_order'] : 'popup_share,popup_donate,popup_html') : $config->get('settings.likebtn_settings.popup_content_order')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_content_order'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_popup_enabled'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show popop after "liking" (VIP, ULTRA)'),
       '#description'   => 'popup_enabled',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_enabled']) ?
-        $default_values['likebtn_settings_popup_enabled'] : TRUE) : $config->get('settings.likebtn_settings.popup_enabled')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_enabled'),
       '#states' => array(
         'disabled' => array(
           array(':input[name="likebtn_plan"]' => array('value' => LIKEBTN_PLAN_FREE)),
@@ -305,8 +270,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'select',
       '#title'         => t('Popup position'),
       '#description'   => 'popup_position',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_position']) ?
-        $default_values['likebtn_settings_popup_position'] : TRUE) : $config->get('settings.likebtn_settings.popup_position')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_position'),
       '#options'       => array(
         "top"  => t('top'),
         "right" => t('right'),
@@ -317,8 +281,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'select',
       '#title'         => t('Popup style'),
       '#description'   => 'popup_style',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_style']) ?
-        $default_values['likebtn_settings_popup_style'] : TRUE) : $config->get('settings.likebtn_settings.popup_style')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_style'),
       '#options'       => array(
         "light"  => "light",
         "dark" => "dark"),
@@ -327,37 +290,32 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'checkbox',
       '#title'         => t('Hide popup when clicking outside'),
       '#description'   => 'popup_hide_on_outside_click',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_popup_hide_on_outside_click']) ?
-        $default_values['likebtn_settings_popup_hide_on_outside_click'] : TRUE) : $config->get('settings.likebtn_settings.popup_hide_on_outside_click')),
+      '#default_value' => $config->get('settings.likebtn_settings.popup_hide_on_outside_click'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_event_handler'] = array(
       '#type'          => 'textfield',
       '#title'         => t('JavaScript callback function serving as an event handler'),
       '#description'   => 'event_handler<br/><br/>' . t('The provided function receives the event object as its single argument. The event object has the following properties: <strong>type</strong> – indicates which event was dispatched ("likebtn.loaded", "likebtn.like", "likebtn.unlike", "likebtn.dislike", "likebtn.undislike"); <strong>settings</strong> – button settings; <strong>wrapper</strong> – button DOM-element'),
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_event_handler']) ?
-        $default_values['likebtn_settings_event_handler'] : NULL) : $config->get('settings.likebtn_settings.event_handler')),
+      '#default_value' => $config->get('settings.likebtn_settings.event_handler'),
     );
     $form['likebtn_settings_appearance_behaviour']['likebtn_settings_info_message'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show information message when the button can not be displayed due to misconfiguration'),
       '#description'   => 'info_message',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_info_message']) ?
-        $default_values['likebtn_settings_info_message'] : TRUE) : $config->get('settings.likebtn_settings.info_message')),
+      '#default_value' => $config->get('settings.likebtn_settings.info_message'),
     );
 
     $form['likebtn_settings_counter'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Counter'),
       '#weight'      => 6,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
     $form['likebtn_settings_counter']['likebtn_settings_counter_type'] = array(
       '#type'          => 'select',
       '#title'         => t('Counter type'),
       '#description'   => 'counter_type',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_counter_type']) ?
-        $default_values['likebtn_settings_counter_type'] : "number") : $config->get('settings.likebtn_settings.counter_type')),
+      '#default_value' => $config->get('settings.likebtn_settings.counter_type'),
       '#options'       => array(
         "number"  => t('number'),
         "percent" => t('percent'),
@@ -368,44 +326,38 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'          => 'checkbox',
       '#title'         => t('Votes counter is clickable'),
       '#description'   => 'counter_clickable',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_counter_clickable']) ?
-        $default_values['likebtn_settings_counter_clickable'] : FALSE) : $config->get('settings.likebtn_settings.counter_clickable')),
+      '#default_value' => $config->get('settings.likebtn_settings.counter_clickable'),
     );
     $form['likebtn_settings_counter']['likebtn_settings_counter_show'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show votes counter'),
       '#description'   => 'counter_show',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_counter_show']) ?
-        $default_values['likebtn_settings_counter_show'] : TRUE) : $config->get('settings.likebtn_settings.counter_show')),
+      '#default_value' => $config->get('settings.likebtn_settings.counter_show'),
     );
     $form['likebtn_settings_counter']['likebtn_settings_counter_padding'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Counter padding'),
       '#description'   => 'counter_padding',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_counter_padding']) ?
-        $default_values['likebtn_settings_counter_padding'] : NULL) : $config->get('settings.likebtn_settings.counter_padding')),
+      '#default_value' => $config->get('settings.likebtn_settings.counter_padding'),
     );
     $form['likebtn_settings_counter']['likebtn_settings_counter_zero_show'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show zero value in counter'),
       '#description'   => 'counter_zero_show',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_counter_zero_show']) ?
-        $default_values['likebtn_settings_counter_zero_show'] : FALSE) : $config->get('settings.likebtn_settings.counter_zero_show')),
+      '#default_value' => $config->get('settings.likebtn_settings.counter_zero_show'),
     );
 
     $form['likebtn_settings_sharing'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Sharing'),
       '#weight'      => 7,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
     $form['likebtn_settings_sharing']['likebtn_settings_share_enabled'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show share buttons in the popup.') .  ' ' . t('Use popup_enabled option to enable/disable popup.') . ' (PLUS, PRO, VIP, ULTRA)',
       '#description'   => 'share_enabled',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_share_enabled']) ?
-        $default_values['likebtn_settings_share_enabled'] : TRUE) : $config->get('settings.likebtn_settings.share_enabled')),
+      '#default_value' => $config->get('settings.likebtn_settings.share_enabled'),
       '#states' => array(
         // Disable field.
         'disabled' => array(
@@ -423,8 +375,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       ),
       '#description'   => 'addthis_pubid',
       '#maxlength'     => 30,
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_addthis_pubid']) ?
-        $default_values['likebtn_settings_addthis_pubid'] : NULL) : $config->get('settings.likebtn_settings.addthis_pubid')),
+      '#default_value' => $config->get('settings.likebtn_settings.addthis_pubid'),
       '#states' => array(
         // Disable field.
         'disabled' => array(
@@ -439,8 +390,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
         '@link' => 'http://www.addthis.com/services/list',
       )),
       '#description'   => 'addthis_service_codes',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_addthis_service_codes']) ?
-        $default_values['likebtn_settings_addthis_service_codes'] : NULL) : $config->get('settings.likebtn_settings.addthis_service_codes')),
+      '#default_value' => $config->get('settings.likebtn_settings.addthis_service_codes'),
       '#states' => array(
         // Disable field.
         'disabled' => array(
@@ -451,144 +401,126 @@ class LikebtnSettingsForm extends ConfigFormBase {
     );
 
     $form['likebtn_settings_loader'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Loader'),
       '#weight'      => 8,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
     $form['likebtn_settings_loader']['likebtn_settings_loader_show'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show loader while button is loading'),
       '#description'   => 'loader_show',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_loader_show']) ?
-        $default_values['likebtn_settings_loader_show'] : FALSE) : $config->get('settings.likebtn_settings.loader_show')),
+      '#default_value' => $config->get('settings.likebtn_settings.loader_show'),
     );
     $form['likebtn_settings_loader']['likebtn_settings_loader_image'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Loader image URL (if empty, default image is used)'),
       '#description'   => 'loader_image',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_loader_image']) ?
-        $default_values['likebtn_settings_loader_image'] : NULL) : $config->get('settings.likebtn_settings.loader_image')),
+      '#default_value' => $config->get('settings.likebtn_settings.loader_image'),
     );
 
     $form['likebtn_settings_tooltips'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Tooltips'),
       '#weight'      => 9,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE
     );
     $form['likebtn_settings_tooltips']['likebtn_settings_tooltip_enabled'] = array(
       '#type'          => 'checkbox',
       '#title'         => t('Show tooltips'),
       '#description'   => 'tooltip_enabled',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_tooltip_enabled']) ?
-        $default_values['likebtn_settings_tooltip_enabled'] : TRUE) : $config->get('settings.likebtn_settings.tooltip_enabled')),
+      '#default_value' => $config->get('settings.likebtn_settings.tooltip_enabled'),
     );
 
     $form['likebtn_settings_i18n'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Labels'),
       '#weight'      => 11,
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
+      '#open'        => FALSE,
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_like'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Like Button label'),
       '#description'   => 'i18n_like',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_like']) ?
-        $default_values['likebtn_settings_i18n_like'] : NULL) : $config->get('settings.likebtn_settings.i18n_like')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_like'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_dislike'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Dislike Button label'),
       '#description'   => 'i18n_dislike',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_dislike']) ?
-        $default_values['likebtn_settings_i18n_dislike'] : NULL) : $config->get('settings.likebtn_settings.i18n_dislike')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_dislike'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_after_like'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Like Button label after liking'),
       '#description'   => 'i18n_after_like',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_after_like']) ?
-        $default_values['likebtn_settings_i18n_after_like'] : NULL) : $config->get('settings.likebtn_settings.i18n_after_like')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_after_like'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_after_dislike'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Dislike Button label after disliking'),
       '#description'   => 'i18n_after_dislike',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_after_dislike']) ?
-        $default_values['likebtn_settings_i18n_after_dislike'] : NULL) : $config->get('settings.likebtn_settings.i18n_after_dislike')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_after_dislike'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_like_tooltip'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Like Button tooltip'),
       '#description'   => 'i18n_like_tooltip',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_like_tooltip']) ?
-        $default_values['likebtn_settings_i18n_like_tooltip'] : NULL) : $config->get('settings.likebtn_settings.i18n_like_tooltip')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_like_tooltip'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_dislike_tooltip'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Dislike Button tooltip'),
       '#description'   => 'i18n_dislike_tooltip',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_dislike_tooltip']) ?
-        $default_values['likebtn_settings_i18n_dislike_tooltip'] : NULL) : $config->get('settings.likebtn_settings.i18n_dislike_tooltip')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_dislike_tooltip'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_unlike_tooltip'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Like Button tooltip after "liking"'),
       '#description'   => 'i18n_unlike_tooltip',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_unlike_tooltip']) ?
-        $default_values['likebtn_settings_i18n_unlike_tooltip'] : NULL) : $config->get('settings.likebtn_settings.i18n_unlike_tooltip')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_unlike_tooltip'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_undislike_tooltip'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Dislike Button tooltip after "liking"'),
       '#description'   => 'i18n_undislike_tooltip',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_undislike_tooltip']) ?
-        $default_values['likebtn_settings_i18n_undislike_tooltip'] : NULL) : $config->get('settings.likebtn_settings.i18n_undislike_tooltip')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_undislike_tooltip'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_share_text'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Text displayed in share popup after "liking"'),
       '#description'   => 'i18n_share_text',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_share_text']) ?
-        $default_values['likebtn_settings_i18n_share_text'] : NULL) : $config->get('settings.likebtn_settings.i18n_share_text')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_share_text'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_popup_close'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Popup close button'),
       '#description'   => 'i18n_popup_close',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_popup_close']) ?
-        $default_values['likebtn_settings_i18n_popup_close'] : NULL) : $config->get('settings.likebtn_settings.i18n_popup_close')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_popup_close'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_popup_text'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Popup text when sharing is disabled'),
       '#description'   => 'i18n_popup_text',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_popup_text']) ?
-        $default_values['likebtn_settings_i18n_popup_text'] : NULL) : $config->get('settings.likebtn_settings.i18n_popup_text')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_popup_text'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_settings_i18n_popup_donate'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Text before donate buttons in the popup'),
       '#description'   => 'i18n_popup_donate',
-      '#default_value' => ($default_values ? (isset($default_values['likebtn_settings_i18n_popup_donate']) ?
-        $default_values['likebtn_settings_i18n_popup_donate'] : NULL) : $config->get('settings.likebtn_settings.i18n_popup_donate')),
+      '#default_value' => $config->get('settings.likebtn_settings.i18n_popup_donate'),
     );
 
     $form['likebtn_settings_i18n']['likebtn_translate'] = array(
@@ -597,19 +529,22 @@ class LikebtnSettingsForm extends ConfigFormBase {
     );
 
     $form['likebtn_demo_fieldset'] = array(
-      '#type'        => 'fieldset',
+      '#type'        => 'details',
       '#title'       => t('Demo'),
       '#weight'      => 12,
-      '#collapsible' => FALSE,
-      '#collapsed'   => FALSE,
+      '#open'        => FALSE
     );
 
     /*
+
     $form['likebtn_demo_fieldset']['likebtn_demo'] = array(
       '#type'     => 'markup',
-      '#markup'   => _likebtn_get_markup('live_demo', 1, $default_values),
+      '#markup'   => $this->likebtn_get_markup('live_demo', 1, $default_values),
     );
+
     */
+
+    $form['#attached']['library'][] = 'likebtn/likebtn_libraries';
 
     return parent::buildForm($form, $form_state);
   }
@@ -670,4 +605,196 @@ class LikebtnSettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
   }
+
+  protected function likebtn_get_markup($element_name, $element_id, $values = NULL, $wrap = TRUE, $include_entity_data = TRUE) {
+    $prepared_settings = array();
+    $config = $this->config('likebtn-settings');
+
+    $likebtn = new LikeBtn();
+    $likebtn->runSyncVotes();
+
+    $settings = unserialize(LIKEBTN_SETTINGS);
+
+    $data = '';
+    if ($element_name && $element_id) {
+      $data .= 'data-identifier="' . $element_name . '_' . $element_id . '"';
+    }
+
+    $site_id = $config->get('settings.likebtn_account_data_site_id');
+    if ($site_id) {
+      $data .= ' data-site_id="' . $site_id . '" ';
+    }
+
+    // Website subdirectory.
+    if ($config->get('settings.likebtn_settings_subdirectory')) {
+      $data .= ' data-subdirectory="' . $config->get('settings.likebtn_settings_subdirectory') . '" ';
+    }
+
+    $data .= ' data-engine="drupal" ';
+    if (defined('VERSION')) {
+      $data .= ' data-engine_v="' . VERSION . '" ';
+    }
+
+    $data .= ' data-plugin_v="' . LIKEBTN_VERSION . '" ';
+
+    foreach ($settings as $option_name => $option_info) {
+
+      if ($values) {
+        // For field.
+        if (isset($values['likebtn_settings_' . $option_name])) {
+          $option_value = $values['likebtn_settings_' . $option_name];
+        }
+        elseif (isset($values[$option_name])) {
+          $option_value = $values[$option_name];
+        }
+        else {
+          $option_value = '';
+        }
+      }
+      else {
+        if (function_exists('variable_get_value')) {
+          $option_value = $config->get->value('likebtn_settings_' . $option_name) ?: array('default' => '');
+        }
+        else {
+          $option_value = $config->get('settings.likebtn_settings_' . $option_name);
+        }
+      }
+
+      $option_value_prepared = _likebtn_prepare_option($option_name, $option_value);
+      $prepared_settings[$option_name] = $option_value_prepared;
+
+      // Do not add option if it has default value.
+      if ($option_value !== '' && $option_value != $settings[$option_name]['default']) {
+        $data .= ' data-' . $option_name . '="' . $option_value_prepared . '" ';
+      }
+    }
+
+    // Add item options.
+    if ($include_entity_data) {
+      if (empty($prepared_settings['item_url']) || empty($prepared_settings['item_title'])) {
+        $entity_list = array();
+        $entity = NULL;
+        $entity_url = '';
+        $entity_title = '';
+        $entity_date = '';
+
+        // Ignore dummy entity name.
+        if (\Drupal::entityTypeManager()->getDefinition($element_name)) {
+          // For fields.
+          $parent_entity_id = preg_replace('/_.*/', '', $element_id);
+          $entity_list = Entity::load($element_name, array($parent_entity_id));
+        }
+        if (!empty($entity_list)) {
+          $entity = array_shift($entity_list);
+        }
+        if ($entity && (isset($entity->title) || isset($entity->subject))) {
+          // URL.
+          if (empty($prepared_settings['item_url'])) {
+            $entity_url_object = Entity::url($element_name, $entity);
+
+            if (!empty($entity_url_object['path'])) {
+              global $base_url;
+              $entity_url = $base_url . '/' . $entity_url_object['path'];
+            }
+          }
+
+          // Title.
+          if (empty($prepared_settings['item_title'])) {
+            if (isset($entity->title)) {
+              $entity_title = $entity->title;
+            }
+            elseif (isset($entity->subject)) {
+              $entity_title = $entity->subject;
+            }
+          }
+
+          // Date.
+          if (empty($prepared_settings['item_date'])) {
+            if (isset($entity->created)) {
+              $entity_date = date("c", $entity->created);
+            }
+          }
+        }
+
+        if ($entity_url) {
+          $data .= ' data-item_url="' . $entity_url . '" ';
+        }
+        if ($entity_title) {
+          $entity_title = htmlspecialchars($entity_title);
+          $data .= ' data-item_title="' . $entity_title . '" ';
+        }
+        if ($entity_date) {
+          $data .= ' data-item_date="' . $entity_date . '" ';
+        }
+      }
+    }
+
+
+
+    drupal_add_js("//w.likebtn.com/js/w/widget.js", array('type' => 'external', 'scope' => 'footer'));
+
+    $widget_script = <<<WIDGET_SCRIPT
+(function(d, e, s) {a = d.createElement(e);m = d.getElementsByTagName(e)[0];a.async = 1;a.src = s;m.parentNode.insertBefore(a, m)})(document, 'script', '//w.likebtn.com/js/w/widget.js'); if (typeof(LikeBtn) != "undefined") { LikeBtn.init(); }
+WIDGET_SCRIPT;
+
+    drupal_add_js($widget_script,
+      array('type' => 'inline', 'scope' => 'footer')
+    );
+
+    $public_url = _likebtn_public_url();
+
+    $markup = <<<MARKUP
+<!-- LikeBtn.com BEGIN -->
+<span class="likebtn-wrapper" {$data}></span>
+<script type="text/javascript">if (typeof(LikeBtn) != "undefined") { LikeBtn.init(); }</script>
+<!-- LikeBtn.com END -->
+MARKUP;
+
+    // HTML before.
+    $html_before = '';
+    if (isset($values['likebtn_html_before'])) {
+      $html_before = $values['likebtn_html_before'];
+    }
+    else {
+      $html_before = $config->get('settings.likebtn_html_before');
+    }
+    if (trim($html_before)) {
+      $markup = $html_before . $markup;
+    }
+
+    // HTML after.
+    $html_after = '';
+    if (isset($values['likebtn_html_after'])) {
+      $html_after = $values['likebtn_html_after'];
+    }
+    else {
+      $html_after = $config->get('settings.likebtn_html_after');
+    }
+    if (trim($html_after)) {
+      $markup = $markup . $html_after;
+    }
+
+    // Alignment.
+    if ($wrap) {
+      $alignment = '';
+      if (isset($values['likebtn_alignment'])) {
+        $alignment = $values['likebtn_alignment'];
+      }
+      else {
+        $alignment = $config->get('settings.likebtn_alignment');
+      }
+      if ($alignment == 'right') {
+        $markup = '<div style="text-align:right" class="likebtn_container">' . $markup . '</div>';
+      }
+      elseif ($alignment == 'center') {
+        $markup = '<div style="text-align:center" class="likebtn_container">' . $markup . '</div>';
+      }
+      else {
+        $markup = '<div class="likebtn_container">' . $markup . '</div>';
+      }
+    }
+
+    return $markup;
+  }
+
 }

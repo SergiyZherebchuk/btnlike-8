@@ -234,14 +234,6 @@ class LikebtnConfigure extends ControllerBase {
     return system_settings_form($form);
   }
 
-  public function generalSettings() {
-
-  }
-
-  public function likebtnSettings() {
-
-  }
-
   public function likebtnTestSync() {
 
     $likebtn_account_email = '';
