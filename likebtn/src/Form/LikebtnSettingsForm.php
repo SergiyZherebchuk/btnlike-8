@@ -638,9 +638,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
     $data .= ' data-plugin_v="' . LIKEBTN_VERSION . '" ';
 
     foreach ($settings as $option_name => $option_info) {
-
       if ($values) {
-        // For field.
         if (isset($values['likebtn_settings_' . $option_name])) {
           $option_value = $values['likebtn_settings_' . $option_name];
         }
