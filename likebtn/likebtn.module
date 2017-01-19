@@ -266,28 +266,6 @@ function likebtn_menu() {
 }
 
 /**
- * Implements hook_filter_info().
- */
-function likebtn_filter_info() {
-  $filters = array();
-  $filters['likebtn'] = array(
-    'title' => t('Enable LikeBtn shortcodes'),
-    // 'description' => t('Sets up a filter that enables LikeBtn shortcodes.'),.
-    'prepare callback' => 'likebtn_filter_prepare',
-    'process callback' => 'likebtn_filter_process',
-    // The name of a function that returns end-user-facing filter
-    // usage guidelines for the filter.
-    'tips callback'  => 'likebtn_filter_tips',
-    // (default TRUE) Specifies whether the filtered text can be cached.
-    // Note that setting this to FALSE makes the entire text format not
-    // cacheable, which may have an impact on the site's overall performance.
-    'cache' => TRUE,
-  );
-
-  return $filters;
-}
-
-/**
  * Implements hook_entity_view().
  */
 function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
@@ -810,6 +788,7 @@ function likebtn_form_node_type_form_alter(&$form, $form_state) {
  *
  * Alter comments query to join with the votingapi_vote table and sort.
  */
+/*
 function likebtn_query_comment_filter_alter(QueryAlterableInterface $query) {
 
   if ((get_class($query) == 'PagerDefault') && ($node = $query->getMetaData('node'))) {
@@ -856,6 +835,7 @@ function likebtn_query_comment_filter_alter(QueryAlterableInterface $query) {
     $query->orderBy('torder', $order);
   }
 }
+*/
 
 /**
  * Test synchronization callback.
@@ -897,6 +877,45 @@ function likebtn_test_sync() {
 
   ob_clean();
   echo json_encode($response);
+}
+
+/**
+ * Implements hook_votingapi_metadata_alter().
+ */
+function likebtn_votingapi_metadata_alter(&$data) {
+  // Voting API tag name.
+  $data['tags'][LIKEBTN_VOTING_TAG] = array(
+    'name' => LIKEBTN_VOTING_TAG,
+    'description' => 'LikeBtn',
+    'module' => 'likebtn',
+  );
+}
+
+
+
+
+
+
+
+/**
+ * All is good
+ */
+
+/**
+ * Implements hook_filter_info().
+ */
+function likebtn_filter_info() {
+  $filters = array();
+  $filters['likebtn'] = array(
+    'title' => t('Enable LikeBtn shortcodes'),
+    'description' => t('Sets up a filter that enables LikeBtn shortcodes.'),
+    'prepare callback' => 'likebtn_filter_prepare',
+    'process callback' => 'likebtn_filter_process',
+    'tips callback'  => 'likebtn_filter_tips',
+    'cache' => TRUE,
+  );
+
+  return $filters;
 }
 
 /**
@@ -950,17 +969,4 @@ function likebtn_filter_process($text, $filter, $format, $langcode, $cache, $cac
  */
 function likebtn_filter_tips($filter, $format, $long) {
   return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . t('Insert a Like Button using shortcode.');
-}
-
-
-/**
- * Implements hook_votingapi_metadata_alter().
- */
-function likebtn_votingapi_metadata_alter(&$data) {
-  // Voting API tag name.
-  $data['tags'][LIKEBTN_VOTING_TAG] = array(
-    'name' => LIKEBTN_VOTING_TAG,
-    'description' => 'LikeBtn',
-    'module' => 'likebtn',
-  );
 }
