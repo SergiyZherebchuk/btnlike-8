@@ -442,18 +442,6 @@ function likebtn_field_is_empty($item, $field) {
 }
 
 /**
- * Implements hook_field_widget_info().
- */
-function likebtn_field_widget_info() {
-  return array(
-    'likebtn_default_widget' => array(
-      'label'       => 'Like Button',
-      'field types' => array('likebtn_field'),
-    ),
-  );
-}
-
-/**
  * Get settings values set for item or instance.
  */
 function _likebtn_field_load($field, $item, $instance) {
@@ -500,35 +488,6 @@ function _likebtn_field_load($field, $item, $instance) {
     }
   }
   return $value;
-}
-
-/**
- * Implements hook_field_formatter_info().
- */
-function likebtn_field_formatter_info() {
-  return array(
-    'default' => array(
-      'label' => t('LikeBtn (default)'),
-      'field types' => array('likebtn_field'),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_formatter_view().
- */
-function likebtn_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $entity_info = entity_get_info($entity_type);
-  $entity_id_key = $entity_info['entity keys']['id'];
-
-  $elements = array();
-  foreach ($items as $delta => $item) {
-    $elements[$delta] = array(
-      '#markup' => _likebtn_get_markup($entity_type, $entity->$entity_id_key . '_field_' . $instance['field_id'] . '_index_' . $delta, _likebtn_flatten_field_instance_settings($instance['settings'])),
-    );
-  }
-
-  return $elements;
 }
 
 /**
@@ -969,4 +928,45 @@ function likebtn_filter_process($text, $filter, $format, $langcode, $cache, $cac
  */
 function likebtn_filter_tips($filter, $format, $long) {
   return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . t('Insert a Like Button using shortcode.');
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function likebtn_field_widget_info() {
+  return array(
+    'likebtn_default_widget' => array(
+      'label'       => 'Like Button',
+      'field types' => array('likebtn_field'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function likebtn_field_formatter_info() {
+  return array(
+    'default' => array(
+      'label' => t('LikeBtn (default)'),
+      'field types' => array('likebtn_field'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function likebtn_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $entity_info = entity_get_info($entity_type);
+  $entity_id_key = $entity_info['entity keys']['id'];
+
+  $elements = array();
+  foreach ($items as $delta => $item) {
+    $elements[$delta] = array(
+      '#markup' => _likebtn_get_markup($entity_type, $entity->$entity_id_key . '_field_' . $instance['field_id'] . '_index_' . $delta, _likebtn_flatten_field_instance_settings($instance['settings'])),
+    );
+  }
+
+  return $elements;
 }

@@ -26,4 +26,14 @@ class LikebtnFieldItem extends FieldItemBase {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     // TODO: Implement schema() method.
   }
+
+  public function isEmpty() {
+    $field_info = likebtn_field_info();
+    foreach ($field_info['likebtn_field']['settings'] as $field_name => $dummy) {
+      if (!empty($item[$field_name])) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
 }
