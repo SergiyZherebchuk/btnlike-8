@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
  *
  * @FieldWidget(
  *   id = "likebtn_default_widget",
- *   label = ("Like Button"),
+ *   label = @Translation("Like Button"),
  *   field_types = {
  *     "likebtn_field"
  *   }

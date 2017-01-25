@@ -1,5 +1,9 @@
 <?php
 
+namespace Drupal\likebtn\Plugin\Field\FieldType;
+
+use Drupal\Core\Field\FieldItemBase;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
  * Plugin implementation of the 'country' field type.
@@ -13,23 +17,49 @@
  *   default_formatter = "default"
  * )
  */
-namespace Drupal\likebtn\Plugin\Field\FieldType;
-
-use Drupal\Core\Field\FieldItemBase;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
-
 class LikebtnFieldItem extends FieldItemBase {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    // TODO: Implement propertyDefinitions() method.
+		$properties['likebtn_likes'] = DataDefinition::create('likebtn_likes')->setLabel(t('Likes count'));
+		$properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes')->setLabel(t('Dislikes count'));
+		$properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes')->setLabel(t('Likes minus dislikes'));
+
+		return $properties;
   }
 
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-    // TODO: Implement schema() method.
+    return array(
+      'columns' => array(
+        'likebtn_likes' => array(
+          'type'        => 'int',
+          'size'        => 'normal',
+          'not null'    => FALSE,
+          'sortable'    => TRUE,
+          'default'     => 0,
+          'description' => 'Likes count',
+        ),
+        'likebtn_dislikes' => array(
+          'type'        => 'int',
+          'size'        => 'normal',
+          'not null'    => FALSE,
+          'sortable'    => TRUE,
+          'default'     => 0,
+          'description' => 'Dislikes count',
+        ),
+        'likebtn_likes_minus_dislikes' => array(
+          'type'        => 'int',
+          'size'        => 'normal',
+          'not null'    => FALSE,
+          'sortable'    => TRUE,
+          'default'     => 0,
+          'description' => 'Likes minus dislikes',
+        ),
+      ),
+    );
   }
 
   public function isEmpty() {
-    $field_info = likebtn_field_info();
-    foreach ($field_info['likebtn_field']['settings'] as $field_name => $dummy) {
+		$field = $this->get('likebtn_field');
+    foreach ($field['settings'] as $field_name => $dummy) {
       if (!empty($item[$field_name])) {
         return FALSE;
       }

@@ -266,7 +266,7 @@ class LikeBtn {
         'entity_type' => $entity_type . '_backup',
         );
         try {
-        db_update('votingapi_vote')
+        \Drupal::database()->update('votingapi_vote')
         ->fields($remove_old_votes_fields)
         ->condition('entity_type', $entity_type)
         ->condition('vote_source', array('like', 'dislike'), 'NOT IN')
@@ -278,7 +278,7 @@ class LikeBtn {
         // Remove votes cast on this entity by the previous version
         // of the plugin, when vote_source was ''
         /*try {
-        db_delete('votingapi_vote')
+        \Drupal::database()->delete('votingapi_vote')
         ->condition('entity_type', $entity_type)
         ->condition('entity_id', $entity_id)
         ->condition('tag', 'vote')
@@ -324,14 +324,14 @@ class LikeBtn {
 
             try {
               // Insert value.
-              db_insert('field_data_' . $field_name)
+              \Drupal::database()->insert('field_data_' . $field_name)
                 ->fields($field_fields_data)
                 ->execute();
             }
             catch(Exception $e) {
               // Update value.
               try {
-                db_update('field_data_' . $field_name)
+                \Drupal::database()->insert('field_data_' . $field_name)
                   ->fields($field_fields_data)
                   ->condition('entity_type', $entity_type)
                   ->condition('bundle', $bundle)
