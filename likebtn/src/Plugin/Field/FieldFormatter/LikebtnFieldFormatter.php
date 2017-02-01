@@ -2,6 +2,7 @@
 
 namespace Drupal\likebtn\Plugin\Field\FieldFormatter;
 
+use Drupal\Core\Entity\EntityManager;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormStateInterface;

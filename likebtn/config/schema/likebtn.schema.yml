@@ -1,0 +1,122 @@
+likebtn.settings:
+  type: mapping
+  label: Settings
+  mapping:
+    general.likebtn_user_logged_in:
+      type: string
+    likebtn_account_data_site_id:
+      type: string
+    likebtn_settings_subdirectory:
+      type: string
+    likebtn_html_before:
+      type: string
+    likebtn_html_after:
+      type: string
+    settings.likebtn_alignment:
+      type: string
+    settings.likebtn_settings.style:
+      type: string
+    settings.likebtn_settings.lang:
+      type: string
+    likebtn_settings_show_like_label:
+      type: boolean
+    likebtn_settings_show_dislike_label:
+      type: boolean
+    likebtn_settings_popup_dislike:
+      type: boolean
+    likebtn_settings_like_enabled:
+      type: boolean
+    likebtn_settings_icon_like_show:
+      type: boolean
+    likebtn_settings_icon_dislike_show:
+      type: boolean
+    likebtn_settings_lazy_load:
+      type: boolean
+    likebtn_settings_dislike_enabled:
+      type: boolean
+    likebtn_settings_display_only:
+      type: boolean
+    likebtn_settings_unlike_allowed:
+      type: boolean
+    likebtn_settings_like_dislike_at_the_same_time:
+      type: boolean
+    likebtn_settings_revote_period:
+      type: string
+    likebtn_settings_show_copyright:
+      type: boolean
+    likebtn_settings_rich_snippet:
+      type: boolean
+    likebtn_settings_popup_html:
+      type: string
+    likebtn_settings_popup_donate:
+      type: string
+    likebtn_settings_popup_content_order:
+      type: string
+    likebtn_settings_popup_enabled:
+      type: boolean
+    likebtn_settings_popup_position:
+      type: boolean
+    likebtn_settings_popup_style:
+      type: boolean
+    likebtn_settings_popup_hide_on_outside_click:
+      type: boolean
+    likebtn_settings_event_handler:
+      type: 'NULL'
+    likebtn_settings_info_message:
+      type: boolean
+    likebtn_settings_counter_type:
+      type: string
+    likebtn_settings_counter_clickable:
+      type: boolean
+    likebtn_settings_counter_show:
+      type: boolean
+    likebtn_settings_counter_padding:
+      type: 'NULL'
+    likebtn_settings_counter_zero_show:
+      type: boolean
+    likebtn_settings_share_enabled:
+      type: boolean
+    likebtn_settings_addthis_pubid:
+      type: 'NULL'
+    likebtn_settings_addthis_service_codes:
+      type: 'NULL'
+    likebtn_settings_loader_show:
+      type: boolean
+    likebtn_settings_loader_image:
+      type: 'NULL'
+    likebtn_settings_tooltip_enabled:
+      type: boolean
+    settings.likebtn_settings.i18n_like:
+      type: 'NULL'
+    settings.likebtn_settings.i18n_dislike:
+      type: 'NULL'
+    settings.likebtn_settings.i18n_after_like:
+      type: 'NULL'
+    likebtn_settings_i18n_after_dislike:
+      type: 'NULL'
+    likebtn_settings_i18n_like_tooltip:
+      type: 'NULL'
+    likebtn_settings_i18n_dislike_tooltip:
+      type: 'NULL'
+    likebtn_settings_i18n_unlike_tooltip:
+      type: 'NULL'
+    likebtn_settings_i18n_undislike_tooltip:
+      type: 'NULL'
+    likebtn_settings_i18n_share_text:
+      type: 'NULL'
+    likebtn_settings_i18n_popup_close:
+      type: 'NULL'
+    likebtn_settings_i18n_popup_text:
+      type: 'NULL'
+    likebtn_settings_i18n_popup_donate:
+      type: 'NULL'
+    general.likebtn_weight:
+      type: integer
+    likebtn_account_data_email:
+      type: string
+    likebtn_account_data_api_key:
+      type: string
+    general.likebtn_sync_inerval:
+      type: integer
+    likebtn_settings_local_domain:
+      type: string

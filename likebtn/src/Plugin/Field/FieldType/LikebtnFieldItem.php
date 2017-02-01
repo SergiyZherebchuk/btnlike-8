@@ -19,11 +19,11 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  */
 class LikebtnFieldItem extends FieldItemBase {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-		$properties['likebtn_likes'] = DataDefinition::create('likebtn_likes')->setLabel(t('Likes count'));
-		$properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes')->setLabel(t('Dislikes count'));
-		$properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes')->setLabel(t('Likes minus dislikes'));
+    $properties['likebtn_likes'] = DataDefinition::create('likebtn_likes')->setLabel(t('Likes count'));
+    $properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes')->setLabel(t('Dislikes count'));
+    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes')->setLabel(t('Likes minus dislikes'));
 
-		return $properties;
+    return $properties;
   }
 
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
@@ -58,12 +58,22 @@ class LikebtnFieldItem extends FieldItemBase {
   }
 
   public function isEmpty() {
-		$field = $this->get('likebtn_field');
+    $field = $this->get('likebtn_field');
     foreach ($field['settings'] as $field_name => $dummy) {
       if (!empty($item[$field_name])) {
         return FALSE;
       }
     }
     return TRUE;
+  }
+
+  public static function defaultFieldSettings() {
+    $settings = unserialize(LIKEBTN_SETTINGS);
+    foreach ($settings as $option_name => $option_info) {
+      $info['likebtn_field']['settings'][$option_name] = $option_info['default'];
+      $info['likebtn_field']['instance_settings'][$option_name] = $option_info['default'];
+    }
+
+    return $settings;
   }
 }

@@ -7,22 +7,8 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Component\Utility\Html;
-
-// Module name.
-define('LIKEBTN_MODULE_NAME', 'likebtn');
-define('LIKEBTN_VERSION', '1.12');
-
-// Views wisget display options.
-define('LIKEBTN_VIEWS_WIDGET_DISPLAY_ONLY', 1);
-define('LIKEBTN_VIEWS_WIDGET_FULL', 2);
-
-// LikeBtn plans.
-define('LIKEBTN_PLAN_TRIAL', 9);
-define('LIKEBTN_PLAN_FREE', 0);
-define('LIKEBTN_PLAN_PLUS', 1);
-define('LIKEBTN_PLAN_PRO', 2);
-define('LIKEBTN_PLAN_VIP', 3);
-define('LIKEBTN_PLAN_ULTRA', 4);
+use Drupal\node\Entity\Node;
+use Drupal\likebtn\LikebtnInterface;
 
 define('LIKEBTN_SETTINGS', serialize(array(
     "identifier"             => array("default" => ''),
@@ -157,23 +143,6 @@ define('LIKEBTN_WEBSITE_LOCALES', serialize(array(
     "en",
     "ru")));
 
-// Comments sort by.
-define('LIKEBTN_COMMENTS_SORT_BY_LIKES', 'likes');
-define('LIKEBTN_COMMENTS_SORT_BY_DISLIKES', 'dislikes');
-define('LIKEBTN_COMMENTS_SORT_BY_LIKES_MINUS_DISLIKES', 'likes_minus_dislikes');
-
-// Comments sort order.
-define('LIKEBTN_COMMENTS_SORT_ORDER_ASC', 'asc');
-define('LIKEBTN_COMMENTS_SORT_ORDER_DESC', 'desc');
-
-// LikeBtn shortcode.
-define('LIKEBTN_SHORTCODE', 'likebtn');
-
-// Voting API tag name.
-define('LIKEBTN_VOTING_TAG', 'likebtn');
-// Voting API vote source of the vote cast on the entity.
-define('LIKEBTN_VOTING_VOTE_SOURCE', 'entity');
-
 /**
  * Implements hook_theme().
  */
@@ -199,88 +168,22 @@ function likebtn_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /**
- * Implements hook_menu().
- */
-function likebtn_menu() {
-  $items = array();
-
-  $items['admin/config/services/likebtn'] = array(
-    'description'      => t('Configuration for LikeBtn module'),
-    'page callback'    => 'drupal_get_form',
-    'page arguments'   => array('likebtn_general_settings'),
-    'access arguments' => array('administer site configuration'),
-    'type'             => MENU_NORMAL_ITEM,
-    'file'             => 'likebtn.admin.inc',
-  );
-
-  $items['admin/config/services/likebtn/general-settings'] = array(
-    'title'            => t('General settings'),
-    'type'             => MENU_DEFAULT_LOCAL_TASK,
-    'weight'           => -10,
-  );
-
-  $items['admin/config/services/likebtn/likebtn-settings'] = array(
-    'title'            => t('LikeBtn settings'),
-    'type'             => MENU_LOCAL_TASK,
-    'page callback'    => 'drupal_get_form',
-    'page arguments'   => array('likebtn_likebtn_settings'),
-    'access arguments' => array('administer site configuration'),
-    'file'             => 'likebtn.admin.inc',
-  );
-
-  $items['admin/config/services/likebtn/testsync'] = array(
-    'page callback'    => 'likebtn_test_sync',
-    'access arguments' => array('administer site configuration'),
-    'type'             => MENU_CALLBACK,
-  );
-
-  /**
-   * In WORK
-   */
-
-  $items['node/%node/likes'] = array(
-    'title'             => t('Likes'),
-    'page callback'     => 'likebtn_likes_page',
-    'page arguments'    => array(1, 'node'),
-    'access arguments'  => array('administer site configuration'),
-    'type'              => MENU_LOCAL_TASK,
-    'weight'            => 10,
-    'file'              => 'likebtn.likes.inc',
-  );
-
-  $items['comment/%comment/likes'] = array(
-    'title'             => t('Likes'),
-    'page callback'     => 'likebtn_likes_page',
-    'page arguments'    => array(1, 'comment'),
-    'access arguments'  => array('administer site configuration'),
-    'type'              => MENU_LOCAL_TASK,
-    'weight'            => 10,
-    'file'              => 'likebtn.likes.inc',
-  );
-
-  /**
-   * In WORK
-   */
-
-  return $items;
-}
-
-/**
  * Implements hook_entity_view().
  */
 function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
+  $config = \Drupal::config('likebtn.settings');
 
   if (!in_array($type, array('node', 'comment'))) {
     return;
   }
 
   // Check if module is enabled for the current entity view mode.
-  if (!in_array($view_mode, variable_get('likebtn_view_modes', array()), TRUE)) {
+  if (!in_array($view_mode, $config->get('likebtn_view_modes', array()), TRUE)) {
     return;
   }
 
   // Check user authorization.
-  $user_logged_in = variable_get('likebtn_user_logged_in', 'all');
+  $user_logged_in = $config->get('likebtn_user_logged_in', 'all');
 
   if ($user_logged_in != 'all') {
     if ($user_logged_in == 'logged_in' && !user_is_logged_in()) {
@@ -292,16 +195,16 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
   }
 
   if ($type == 'comment') {
-    $comment_node = node_load($entity->nid);
+    $comment_node = Node::load($entity->nid);
     // Check if LikeBtn is enabled for comments to the current node type.
-    if (!in_array($comment_node->type, variable_get('likebtn_comments_nodetypes', array()), TRUE)) {
+    if (!in_array($comment_node->type, $config->get('likebtn_comments_nodetypes', array()), TRUE)) {
       return;
     }
     $entity_id = $entity->cid;
   }
   else {
     // Check if LikeBtn is enabled for the current node type.
-    if (!in_array($entity->type, variable_get('likebtn_nodetypes', array()), TRUE)) {
+    if (!in_array($entity->type, $config->get('likebtn_nodetypes', array()), TRUE)) {
       return;
     }
     $entity_id = $entity->nid;
@@ -309,81 +212,58 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
 
   $entity->content['likebtn_display'] = array(
     '#markup' => _likebtn_get_markup($type, $entity_id),
-    '#weight' => variable_get('likebtn_weight'),
+    '#weight' => $config->get('likebtn_weight'),
   );
 }
 
 /**
- * Implements hook_variable_info().
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add comment configuration settings to the edit content type form.
  */
-function likebtn_variable_info($options) {
+function likebtn_form_node_type_form_alter(&$form, $form_state) {
+  $config = \Drupal::config('likebtn-settings');
 
-  $variables['likebtn_settings_i18n_like'] = array(
-    'title'       => 'LikeBtn: i18n_like',
-    'description' => t('Like Button label', array(), $options),
-    'localize'    => TRUE,
+  $form['comment']['likebtn_comments_sort_enabled'] = array(
+    '#title' => t('Sort comments by LikeBtn likes/dislikes'),
+    '#type' => 'checkbox',
+    '#default_value' => $config->get('likebtn_comments_sort_enabled_' . $form['#node_type']->type, FALSE),
   );
-  $variables['likebtn_settings_i18n_dislike'] = array(
-    'title'       => 'LikeBtn: i18n_dislike',
-    'description' => t('Dislike Button label', array(), $options),
-    'localize'    => TRUE,
+  // Sort by.
+  $form['comment']['likebtn_comments_sort_by'] = array(
+    '#title' => t('Sort by'),
+    '#type' => 'select',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="likebtn_comments_sort_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
+    '#options' => array(
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_LIKES => t('Likes'),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_DISLIKES => t('Dislikes'),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_LIKES_MINUS_DISLIKES => t('Likes minus dislikes')),
+    '#default_value' => $config->get('likebtn_comments_sort_by_' . $form['#node_type']->type, LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_LIKES),
   );
-  $variables['likebtn_settings_i18n_after_like'] = array(
-    'title'       => 'LikeBtn: i18n_after_like',
-    'description' => t('Like Button label', array(), $options),
-    'localize'    => TRUE,
+  // Sort order.
+  $form['comment']['likebtn_comments_sort_order'] = array(
+    '#title' => t('Sort order'),
+    '#type' => 'select',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="likebtn_comments_sort_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
+    '#options' => array(
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC => t('Descending'),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_ASC => t('Ascending')),
+    '#default_value' => $config->get('likebtn_comments_sort_order_' . $form['#node_type']->type, LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC),
   );
-  $variables['likebtn_settings_i18n_after_dislike'] = array(
-    'title'       => 'LikeBtn: i18n_after_dislike',
-    'description' => t('Like Button label', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_like_tooltip'] = array(
-    'title'       => 'LikeBtn: i18n_like_tooltip',
-    'description' => t('Like Button tooltip', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_dislike_tooltip'] = array(
-    'title'       => 'LikeBtn: i18n_dislike_tooltip',
-    'description' => t('Dislike Button tooltip', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_unlike_tooltip'] = array(
-    'title'       => 'LikeBtn: i18n_unlike_tooltip',
-    'description' => t('Like Button tooltip after "liking"', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_undislike_tooltip'] = array(
-    'title'       => 'LikeBtn: i18n_undislike_tooltip',
-    'description' => t('Dislike Button tooltip after "disliking"', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_share_text'] = array(
-    'title'       => 'LikeBtn: i18n_share_text',
-    'description' => t('Text displayed in share popup after "liking"', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_popup_close'] = array(
-    'title'       => 'LikeBtn: i18n_popup_close',
-    'description' => t('Popup close button', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_popup_text'] = array(
-    'title'       => 'LikeBtn: i18n_popup_text',
-    'description' => t('Popup text when sharing is disabled', array(), $options),
-    'localize'    => TRUE,
-  );
-  $variables['likebtn_settings_i18n_popup_donate'] = array(
-    'title'       => 'LikeBtn: i18n_popup_donate',
-    'description' => t('Text before donate buttons in the popup', array(), $options),
-    'localize'    => TRUE,
-  );
-  return $variables;
 }
 
 
-
-
+/**
+ * IN PROGRESS
+ */
 
 /**
  * Get module public URL.
@@ -401,48 +281,12 @@ function _likebtn_subdirectory() {
 }
 
 /**
- * Implements hook_field_info().
- */
-function likebtn_field_info() {
-  $info = array(
-    'likebtn_field' => array(
-      'label' => t('LikeBtn'),
-      'description' => t('Like Button.'),
-      'settings' => array(),
-      'instance_settings' => array(),
-      'default_widget' => 'likebtn_default_widget',
-      'default_formatter' => 'default',
-    ),
-  );
-
-  $settings = unserialize(LIKEBTN_SETTINGS);
-  foreach ($settings as $option_name => $option_info) {
-    $info['likebtn_field']['settings'][$option_name] = $option_info['default'];
-    $info['likebtn_field']['instance_settings'][$option_name] = $option_info['default'];
-  }
-  return $info;
-}
-
-/**
  * Implements hook_field_instance_settings_form().
  */
 function likebtn_field_instance_settings_form($field, $instance) {
   $form = _likebtn_settings_form(_likebtn_flatten_field_instance_settings($instance['settings']));
 
   return $form;
-}
-
-/**
- * Implements hook_field_is_empty().
- */
-function likebtn_field_is_empty($item, $field) {
-  $field_info = likebtn_field_info();
-  foreach ($field_info['likebtn_field']['settings'] as $field_name => $dummy) {
-    if (!empty($item[$field_name])) {
-      return FALSE;
-    }
-  }
-  return TRUE;
 }
 
 /**
@@ -537,27 +381,27 @@ function likebtn_votingapi_views_formatters($details = array()) {
  * Get views widget markup.
  */
 function likebtn_views_widget_display_only($value, $field, $columns) {
-  return _likebtn_get_views_widget_markup($value, $field, $columns, LIKEBTN_VIEWS_WIDGET_DISPLAY_ONLY);
+  return _likebtn_get_views_widget_markup($value, $field, $columns, LikebtnInterface::LIKEBTN_VIEWS_WIDGET_DISPLAY_ONLY);
 }
 
 /**
  * Get views widget markup.
  */
 function likebtn_views_widget_full($value, $field, $columns) {
-  return _likebtn_get_views_widget_markup($value, $field, $columns, LIKEBTN_VIEWS_WIDGET_FULL);
+  return _likebtn_get_views_widget_markup($value, $field, $columns, LikebtnInterface::LIKEBTN_VIEWS_WIDGET_FULL);
 }
 
 /**
  * Get LikeBtn for view.
  */
-function _likebtn_get_views_widget_markup($value, $field, $columns, $mode = LIKEBTN_VIEWS_WIDGET_FULL) {
+function _likebtn_get_views_widget_markup($value, $field, $columns, $mode = LikebtnInterface::LIKEBTN_VIEWS_WIDGET_FULL) {
 
   $entity_name = $field->view->base_table;
   $base_field  = $field->view->base_field;
   $entity_id   = $columns->$base_field;
 
   $values = NULL;
-  if ($mode == LIKEBTN_VIEWS_WIDGET_DISPLAY_ONLY) {
+  if ($mode == LikebtnInterface::LIKEBTN_VIEWS_WIDGET_DISPLAY_ONLY) {
     $values['display_only'] = TRUE;
   }
 
@@ -585,12 +429,12 @@ function likebtn_get_count($entity, $entity_type) {
   list($entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
   try {
-    $query = \Drupal::database()->select('votingapi_vote', 'vv')
+    $query = db_select('votingapi_vote', 'vv')
       ->fields('vv')
       ->condition('vv.entity_type', $entity_type)
       ->condition('vv.entity_id', $entity_id)
       ->condition('vv.value_type', 'points')
-      ->condition('vv.tag', LIKEBTN_VOTING_TAG)
+      ->condition('vv.tag', LikebtnInterface::LIKEBTN_VOTING_TAG)
       ->orderBy('vv.vote_source', 'ASC');
 
     $votingapi_results = $query->execute();
@@ -704,49 +548,6 @@ function _likebtn_prepare_option($option_name, $option_value) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
- *
- * Add comment configuration settings to the edit content type form.
- */
-function likebtn_form_node_type_form_alter(&$form, $form_state) {
-  // Whether to correct sort order.
-  $form['comment']['likebtn_comments_sort_enabled'] = array(
-    '#title' => t('Sort comments by LikeBtn likes/dislikes'),
-    '#type' => 'checkbox',
-    '#default_value' => variable_get('likebtn_comments_sort_enabled_' . $form['#node_type']->type, FALSE),
-  );
-  // Sort by.
-  $form['comment']['likebtn_comments_sort_by'] = array(
-    '#title' => t('Sort by'),
-    '#type' => 'select',
-    '#states' => array(
-      'visible' => array(
-        ':input[name="likebtn_comments_sort_enabled"]' => array('checked' => TRUE),
-      ),
-    ),
-    '#options' => array(
-      LIKEBTN_COMMENTS_SORT_BY_LIKES => t('Likes'),
-      LIKEBTN_COMMENTS_SORT_BY_DISLIKES => t('Dislikes'),
-      LIKEBTN_COMMENTS_SORT_BY_LIKES_MINUS_DISLIKES => t('Likes minus dislikes')),
-    '#default_value' => variable_get('likebtn_comments_sort_by_' . $form['#node_type']->type, LIKEBTN_COMMENTS_SORT_BY_LIKES),
-  );
-  // Sort order.
-  $form['comment']['likebtn_comments_sort_order'] = array(
-    '#title' => t('Sort order'),
-    '#type' => 'select',
-    '#states' => array(
-      'visible' => array(
-        ':input[name="likebtn_comments_sort_enabled"]' => array('checked' => TRUE),
-      ),
-    ),
-    '#options' => array(
-      LIKEBTN_COMMENTS_SORT_ORDER_DESC => t('Descending'),
-      LIKEBTN_COMMENTS_SORT_ORDER_ASC => t('Ascending')),
-    '#default_value' => variable_get('likebtn_comments_sort_order_' . $form['#node_type']->type, LIKEBTN_COMMENTS_SORT_ORDER_DESC),
-  );
-}
-
-/**
  * Implements hook_query_TAG_alter().
  *
  * Alter comments query to join with the votingapi_vote table and sort.
@@ -757,12 +558,12 @@ function likebtn_query_comment_filter_alter(QueryAlterableInterface $query) {
   if ((get_class($query) == 'PagerDefault') && ($node = $query->getMetaData('node'))) {
 
     // Should the order of comments for this content type be corrected?
-    if (!variable_get('likebtn_comments_sort_enabled_' . $node->type, FALSE)) {
+    if (!$config->get('likebtn_comments_sort_enabled_' . $node->type, FALSE)) {
       return;
     }
 
     // Get the configured default sort ordering for this node type.
-    $order = variable_get('likebtn_comments_sort_order_' . $node->type, LIKEBTN_COMMENTS_SORT_ORDER_DESC);
+    $order = $config->get('likebtn_comments_sort_order_' . $node->type, LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC);
 
     $orderby = &$query->getOrderBy();
     $expressions = &$query->getExpressions();
@@ -778,18 +579,18 @@ function likebtn_query_comment_filter_alter(QueryAlterableInterface $query) {
       unset($orderby['c.cid']);
     }
 
-    switch (variable_get('likebtn_comments_sort_by_' . $node->type, LIKEBTN_COMMENTS_SORT_BY_LIKES)) {
-      case LIKEBTN_COMMENTS_SORT_BY_LIKES:
+    switch ($config->get('likebtn_comments_sort_by_' . $node->type, LIKEBTN_COMMENTS_SORT_BY_LIKES)) {
+      case LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_LIKES:
         $query->leftJoin('votingapi_vote', 'vv', "vv.entity_type = 'comment' and vv.entity_id = c.cid and vv.tag = '" . LIKEBTN_VOTING_TAG . "' and vv.value > 0");
         $query->addExpression('ABS(vv.value)', 'torder');
         break;
 
-      case LIKEBTN_COMMENTS_SORT_BY_DISLIKES:
+      case LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_DISLIKES:
         $query->leftJoin('votingapi_vote', 'vv', "vv.entity_type = 'comment' and vv.entity_id = c.cid and vv.tag = '" . LIKEBTN_VOTING_TAG . "' and vv.value < 0");
         $query->addExpression('ABS(vv.value)', 'torder');
         break;
 
-      case LIKEBTN_COMMENTS_SORT_BY_LIKES_MINUS_DISLIKES:
+      case LikebtnInterface::LIKEBTN_COMMENTS_SORT_BY_LIKES_MINUS_DISLIKES:
         $query->leftJoin('votingapi_vote', 'vv_like', "vv_like.entity_type = 'comment' and vv_like.entity_id = c.cid and vv_like.tag = '" . LIKEBTN_VOTING_TAG . "' and vv_like.value > 0");
         $query->leftJoin('votingapi_vote', 'vv_dislike', "vv_dislike.entity_type = 'comment' and vv_dislike.entity_id = c.cid and vv_dislike.tag = '" . LIKEBTN_VOTING_TAG . "' and vv_dislike.value < 0");
         $query->addExpression('COALESCE(vv_like.value, 0) + COALESCE(vv_dislike.value, 0)', 'torder');
@@ -847,12 +648,13 @@ function likebtn_test_sync() {
  */
 function likebtn_votingapi_metadata_alter(&$data) {
   // Voting API tag name.
-  $data['tags'][LIKEBTN_VOTING_TAG] = array(
-    'name' => LIKEBTN_VOTING_TAG,
+  $data['tags'][LikebtnInterface::LIKEBTN_VOTING_TAG] = array(
+    'name' => LikebtnInterface::LIKEBTN_VOTING_TAG,
     'description' => 'LikeBtn',
     'module' => 'likebtn',
   );
 }
+
 
 
 
@@ -894,7 +696,7 @@ function likebtn_filter_prepare($text, $filter, $format, $langcode, $cache, $cac
 function likebtn_filter_process($text, $filter, $format, $langcode, $cache, $cache_id) {
 
   $replacements = array();
-  $regex = '/(?<!\<code\>)\[' . LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
+  $regex = '/(?<!\<code\>)\[' . LikebtnInterface::LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
   preg_match_all($regex, $text, $matches);
 
   // Found shortcodes.
@@ -933,6 +735,7 @@ function likebtn_filter_process($text, $filter, $format, $langcode, $cache, $cac
 function likebtn_filter_tips($filter, $format, $long) {
   return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . t('Insert a Like Button using shortcode.');
 }
+
 
 /**
  * Implements hook_field_widget_info().
@@ -973,4 +776,17 @@ function likebtn_field_formatter_view($entity_type, $entity, $field, $instance, 
   }
 
   return $elements;
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function likebtn_field_is_empty($item, $field) {
+  $field_info = likebtn_field_info();
+  foreach ($field_info['likebtn_field']['settings'] as $field_name => $dummy) {
+    if (!empty($item[$field_name])) {
+      return FALSE;
+    }
+  }
+  return TRUE;
 }
