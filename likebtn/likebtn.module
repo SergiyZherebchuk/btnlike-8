@@ -10,149 +10,24 @@ use Drupal\Component\Utility\Html;
 use Drupal\node\Entity\Node;
 use Drupal\likebtn\LikebtnInterface;
 
-define('LIKEBTN_SETTINGS', serialize(array(
-    "identifier"             => array("default" => ''),
-    "local_domain"           => array("default" => ''),
-    "domain_from_parent"     => array("default" => FALSE),
-    "subdirectory"           => array("default" => ''),
-    "lang"                   => array("default" => "en"),
-    "show_like_label"        => array("default" => TRUE),
-    "show_dislike_label"     => array("default" => FALSE),
-    "popup_dislike"          => array("default" => FALSE),
-    "like_enabled"           => array("default" => TRUE),
-    "dislike_enabled"        => array("default" => TRUE),
-    "icon_like_show"         => array("default" => TRUE),
-    "icon_dislike_show"      => array("default" => TRUE),
-    "lazy_load"              => array("default" => FALSE),
-    "counter_type"           => array("default" => "number"),
-    "counter_clickable"      => array("default" => FALSE),
-    "counter_show"           => array("default" => TRUE),
-    "counter_padding"        => array("default" => ''),
-    "counter_zero_show"      => array("default" => FALSE),
-    "display_only"           => array("default" => FALSE),
-    "unlike_allowed"         => array("default" => TRUE),
-    "like_dislike_at_the_same_time" => array("default" => FALSE),
-    "revote_period"          => array("default" => ''),
-    "style"                  => array("default" => 'white'),
-    "share_enabled"          => array("default" => TRUE),
-    "item_url"               => array("default" => ''),
-    "item_title"             => array("default" => ''),
-    "item_description"       => array("default" => ''),
-    "item_image"             => array("default" => ''),
-    "item_date"              => array("default" => ''),
-    "addthis_pubid"          => array("default" => ''),
-    "addthis_service_codes"  => array("default" => ''),
-    "loader_show"            => array("default" => FALSE),
-    "loader_image"           => array("default" => ''),
-    "tooltip_enabled"        => array("default" => TRUE),
-    "show_copyright"         => array("default" => TRUE),
-    "rich_snippet"           => array("default" => FALSE),
-    "popup_html"             => array("default" => ''),
-    "popup_donate"           => array("default" => ''),
-    "popup_content_order"    => array("default" => 'popup_share,popup_donate,popup_html'),
-    "popup_enabled"          => array("default" => TRUE),
-    "popup_position"         => array("default" => 'top'),
-    "popup_style"            => array("default" => 'light'),
-    "popup_hide_on_outside_click"  => array("default" => TRUE),
-    "event_handler"          => array("default" => ''),
-    "info_message"           => array("default" => ''),
-    "i18n_like"              => array("default" => ''),
-    "i18n_dislike"           => array("default" => ''),
-    "i18n_after_like"        => array("default" => ''),
-    "i18n_after_dislike"     => array("default" => ''),
-    "i18n_like_tooltip"      => array("default" => ''),
-    "i18n_dislike_tooltip"   => array("default" => ''),
-    "i18n_unlike_tooltip"    => array("default" => ''),
-    "i18n_undislike_tooltip" => array("default" => ''),
-    "i18n_share_text"        => array("default" => ''),
-    "i18n_popup_close"       => array("default" => ''),
-    "i18n_popup_text"        => array("default" => ''),
-    "i18n_popup_donate"      => array("default" => ''))));
-
-define('LIKEBTN_LANGS', serialize(array(
-    'en' => '[en] - English',
-      'ru' => '[ru] - Русский',
-      'af' => '[af] - Afrikaans',
-      'ar' => '[ar] - العربية',
-      'hy' => '[hy] - Հայերեն',
-      'bn' => '[bn] - বাংলা',
-      'bg' => '[bg] - Български език',
-      'ca' => '[ca] - Català',
-      'zh_CN' => '[zh_CN] - 简体中文',
-      'cs' => '[cs] - Čeština',
-      'nl' => '[nl] - Nederlands',
-      'fa' => '[fa] - فارسی',
-      'fi' => '[fi] - Suomi',
-      'fr' => '[fr] - Français',
-      'da' => '[da] - Dansk',
-      'de' => '[de] - Deutsch',
-      'el' => '[el] - Ελληνικά',
-      'he' => '[he] - עברית',
-      'hu' => '[hu] - Hungarian',
-      'id' => '[id] - Bahasa Indonesia',
-      'it' => '[it] - Italiano',
-      'ja' => '[ja] - 日本語',
-      'kk' => '[kk] - Қазақ тілі',
-      'ko' => '[ko] - 한국어',
-      'lt' => '[lt] - Lietuvių kalba',
-      'ne' => '[ne] - नेपाली',
-      'no' => '[no] - Norsk bokmål',
-      'pl' => '[pl] - Polski',
-      'pt' => '[pt] - Português',
-      'pt_BR' => '[pt_BR] - Português do Brasil',
-      'ro' => '[ro] - Română',
-      'es' => '[es] - Español',
-      'sv' => '[sv] - Svenska',
-      'th' => '[th] - ไทย',
-      'tr' => '[tr] - Türkçe',
-      'uk' => '[uk] - Українська мова',
-      'vi' => '[vi] - Tiếng Việt')));
-
-define('LIKEBTN_STYLES', serialize(array(
-  'white',
-  'lightgray',
-  'gray',
-  'black',
-  'padded',
-  'drop',
-  'line',
-  'github',
-  'transparent',
-  'youtube',
-  'habr',
-  'heartcross',
-  'plusminus',
-  'google',
-  'greenred',
-  'large',
-  'elegant',
-  'disk',
-  'squarespace',
-  'slideshare',
-  'baidu',
-  'uwhite',
-  'ublack',
-  'uorange',
-  'ublue',
-  'ugreen',
-  'direct',
-  'homeshop')));
-
-// LikeBtn website locales available.
-define('LIKEBTN_WEBSITE_LOCALES', serialize(array(
-    "en",
-    "ru")));
-
 /**
  * Implements hook_theme().
  */
 function likebtn_theme($existing, $type, $theme, $path) {
   return array(
+  	'likebtn_likes_page' => array(
+  		'template' => 'like-page',
+			'variables' => array(
+				'total_likes_minus_dislikes' => NULL,
+				'header' => array(),
+				'rows' => array()
+			)
+		),
     'demo' => array(
       'variables' => array(
         'data' => ''
       )
-    )
+    ),
   );
 }
 
@@ -177,34 +52,32 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
     return;
   }
 
-  // Check if module is enabled for the current entity view mode.
   if (!in_array($view_mode, $config->get('likebtn_view_modes', array()), TRUE)) {
     return;
   }
 
-  // Check user authorization.
-  $user_logged_in = $config->get('likebtn_user_logged_in', 'all');
+  $user_logged_in = $config->get('likebtn_user_logged_in') ?: 'all';
 
   if ($user_logged_in != 'all') {
-    if ($user_logged_in == 'logged_in' && !user_is_logged_in()) {
+    if ($user_logged_in == 'logged_in' && !\Drupal::currentUser()->isAuthenticated()) {
       return;
     }
-    if ($user_logged_in == 'not_logged_in' && user_is_logged_in()) {
+    if ($user_logged_in == 'not_logged_in' && \Drupal::currentUser()->isAuthenticated()) {
       return;
     }
   }
 
   if ($type == 'comment') {
-    $comment_node = Node::load($entity->nid);
+    $comment_node = Node::load($entity->id());
     // Check if LikeBtn is enabled for comments to the current node type.
-    if (!in_array($comment_node->type, $config->get('likebtn_comments_nodetypes', array()), TRUE)) {
+    if (!in_array($comment_node->type, $config->get('likebtn_comments_nodetypes') ?: array(), TRUE)) {
       return;
     }
     $entity_id = $entity->cid;
   }
   else {
     // Check if LikeBtn is enabled for the current node type.
-    if (!in_array($entity->type, $config->get('likebtn_nodetypes', array()), TRUE)) {
+    if (!in_array($entity->type, $config->get('likebtn_nodetypes') ?: array(), TRUE)) {
       return;
     }
     $entity_id = $entity->nid;
@@ -419,76 +292,6 @@ function _likebtn_get_views_widget_markup($value, $field, $columns, $mode = Like
   */
 
   return _likebtn_get_markup($entity_name, $entity_id, $values);
-}
-
-/**
- * Get likes and dislikes count for the node.
- */
-function likebtn_get_count($entity, $entity_type) {
-
-  list($entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
-
-  try {
-    $query = db_select('votingapi_vote', 'vv')
-      ->fields('vv')
-      ->condition('vv.entity_type', $entity_type)
-      ->condition('vv.entity_id', $entity_id)
-      ->condition('vv.value_type', 'points')
-      ->condition('vv.tag', LikebtnInterface::LIKEBTN_VOTING_TAG)
-      ->orderBy('vv.vote_source', 'ASC');
-
-    $votingapi_results = $query->execute();
-  }
-  catch (Exception $e) {
-
-  }
-
-  // Display a table with like counts per button.
-  $rows = array();
-  // Like and dislike rows has been found.
-  $records_by_source  = array();
-
-  while (1) {
-    $record = $votingapi_results->fetchAssoc();
-
-    // Records with likes and dislikes go one after another.
-    if (!count($records_by_source) || $record['vote_source'] == $records_by_source[count($records_by_source) - 1]['vote_source']) {
-      // Do nothing.
-    }
-    elseif (count($records_by_source)) {
-      $first_record  = $records_by_source[0];
-      $second_record = array('value' => 0);
-      if (!empty($records_by_source[1])) {
-        $second_record = $records_by_source[1];
-      }
-
-      if ($first_record['value'] >= 0 && $second_record['value'] <= 0) {
-        $likes    = $first_record['value'];
-        $dislikes = abs($second_record['value']);
-      }
-      else {
-        $likes    = $second_record['value'];
-        $dislikes = abs($first_record['value']);
-      }
-      $likes_minus_dislikes = $likes - $dislikes;
-
-      $rows[] = array(
-        'button' => _likebtn_get_name($first_record['vote_source']),
-        'likes' => $likes,
-        'dislikes' => $dislikes,
-        'likes_minus_dislikes' => $likes_minus_dislikes,
-      );
-
-      $records_by_source = array();
-    }
-    $records_by_source[] = $record;
-
-    if (!$record) {
-      break;
-    }
-  }
-
-  return $rows;
 }
 
 /**

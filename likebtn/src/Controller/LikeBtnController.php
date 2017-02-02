@@ -10,37 +10,32 @@ namespace Drupal\likebtn\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\likebtn\LikeBtn;
+use Drupal\likebtn\LikebtnInterface;
 
 class LikeBtnController extends ControllerBase {
-  public function likes($entity, $entity_type) {
-    $output = '';
 
-    $rows = likebtn_get_count($entity, $entity_type);
+	function likebtn_likes_page($entity, $entity_type) {
+		$rows = $this->likebtn_get_count($entity, $entity_type);
+		$total_likes_minus_dislikes = 0;
+		foreach ($rows as $row) {
+			$total_likes_minus_dislikes += $row['likes_minus_dislikes'];
+		}
 
-    $total_likes_minus_dislikes = 0;
-    foreach ($rows as $row) {
-      $total_likes_minus_dislikes += $row['likes_minus_dislikes'];
-    }
+		$header = array(
+			t('Button'),
+			t('Likes'),
+			t('Dislikes'),
+			t('Likes minus dislikes'),
+		);
 
-    $header = array(
-      t('Button'),
-      t('Likes'),
-      t('Dislikes'),
-      t('Likes minus dislikes'),
-    );
-    $output .= theme('table', array('header' => $header, 'rows' => $rows));
+		$result = array(
+			'total_likes_minus_dislikes' => $total_likes_minus_dislikes,
+			'header' => $header,
+			'rows' => $rows
+		);
 
-    $output .= '<p>' . t('Total likes minus dislikes (vote results):') . ' <strong> ' . $total_likes_minus_dislikes . '</strong></p>';
-    $output .= '<p>' . t("If you don't see information on likes:") . '</p>';
-    $output .= '<ul>';
-    $output .= '<li>' . t('Make sure you have entered information correctly in') . ' <a href="/admin/config/services/likebtn">' . t('Auto-synching likes into local database') . '(PRO, VIP, ULTRA)</a></li>';
-    $output .= '<li>' . t('Make sure that PHP curl extension is enabled.') . '</a></li>';
-    $output .= '<li>' . t('Maybe nobody voted for this content type yet.') . '</a></li>';
-    $output .= '<li>' . t('Perhaps synchronization has not been launched yet.') . '</a></li>';
-    $output .= '</ul>';
-
-    return $output;
-  }
+		return $result;
+	}
 
   public function likebtnTestSync () {
     $likebtn_account_email = '';
@@ -79,4 +74,73 @@ class LikeBtnController extends ControllerBase {
     ob_clean();
     echo json_encode($response);
   }
+
+	/**
+	 * Get likes and dislikes count for the node.
+	 */
+	private function likebtn_get_count($entity, $entity_type) {
+		list($entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
+
+		try {
+			$query = db_select('votingapi_vote', 'vv')
+				->fields('vv')
+				->condition('vv.entity_type', $entity_type)
+				->condition('vv.entity_id', $entity_id)
+				->condition('vv.value_type', 'points')
+				->condition('vv.tag', LikebtnInterface::LIKEBTN_VOTING_TAG)
+				->orderBy('vv.vote_source', 'ASC');
+
+			$votingapi_results = $query->execute();
+		}
+		catch (Exception $e) {
+			return $e;
+		}
+
+		// Display a table with like counts per button.
+		$rows = array();
+		// Like and dislike rows has been found.
+		$records_by_source  = array();
+
+		while (1) {
+			$record = $votingapi_results->fetchAssoc();
+
+			// Records with likes and dislikes go one after another.
+			if (!count($records_by_source) || $record['vote_source'] == $records_by_source[count($records_by_source) - 1]['vote_source']) {
+				// Do nothing.
+			}
+			elseif (count($records_by_source)) {
+				$first_record  = $records_by_source[0];
+				$second_record = array('value' => 0);
+				if (!empty($records_by_source[1])) {
+					$second_record = $records_by_source[1];
+				}
+
+				if ($first_record['value'] >= 0 && $second_record['value'] <= 0) {
+					$likes    = $first_record['value'];
+					$dislikes = abs($second_record['value']);
+				}
+				else {
+					$likes    = $second_record['value'];
+					$dislikes = abs($first_record['value']);
+				}
+				$likes_minus_dislikes = $likes - $dislikes;
+
+				$rows[] = array(
+					'button' => _likebtn_get_name($first_record['vote_source']),
+					'likes' => $likes,
+					'dislikes' => $dislikes,
+					'likes_minus_dislikes' => $likes_minus_dislikes,
+				);
+
+				$records_by_source = array();
+			}
+			$records_by_source[] = $record;
+
+			if (!$record) {
+				break;
+			}
+		}
+
+		return $rows;
+	}
 }

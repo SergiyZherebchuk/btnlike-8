@@ -12,6 +12,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\likebtn\LikeBtn;
+use Drupal\likebtn\LikebtnInterface;
 
 class LikebtnSettingsForm extends ConfigFormBase {
 
@@ -635,7 +636,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       $data .= ' data-engine_v="' . VERSION . '" ';
     }
 
-    $data .= ' data-plugin_v="' . LIKEBTN_VERSION . '" ';
+    $data .= ' data-plugin_v="' . LikebtnInterface::LIKEBTN_VERSION . '" ';
 
     foreach ($settings as $option_name => $option_info) {
       if ($values) {

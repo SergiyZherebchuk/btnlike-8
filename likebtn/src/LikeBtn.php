@@ -2,6 +2,7 @@
 
 namespace Drupal\likebtn;
 
+use Drupal\Component\Plugin\Exception;
 /**
  * Created by PhpStorm.
  * User: user
@@ -96,7 +97,7 @@ class LikeBtn {
     $updated_after = '';
 
     if ($this->config->get('sync.likebtn_last_successfull_sync_time')) {
-      $updated_after = $this->config->get('sync.likebtn_last_successfull_sync_time') - LIKEBTN_LAST_SUCCESSFULL_SYNC_TIME_OFFSET;
+      $updated_after = $this->config->get('sync.likebtn_last_successfull_sync_time') - LikebtnInterface::LIKEBTN_LAST_SUCCESSFULL_SYNC_TIME_OFFSET;
     }
 
     $url = "output=json&last_sync_time=" . $last_sync_time;
@@ -165,7 +166,7 @@ class LikeBtn {
         // Parse identifier.
         if (strstr($item['identifier'], '_field_')) {
           // Item is a field.
-          preg_match("/^(.*)_(\d+)_field_(\d+)(?:_index_(\d+))?$/", $item['identifier'], $identifier_parts);
+          preg_match('/^(.*)_(\d+)_field_(\d+)(?:_index_(\d+))?$/', $item['identifier'], $identifier_parts);
 
           if (!empty($identifier_parts[1])) {
             $entity_type = $identifier_parts[1];
@@ -194,7 +195,7 @@ class LikeBtn {
         }
         else {
           // Item is an entity.
-          preg_match("/^(.*)_(\d+)$/", $item['identifier'], $identifier_parts);
+          preg_match('/^(.*)_(\d+)$/', $item['identifier'], $identifier_parts);
 
           if (!empty($identifier_parts[1])) {
             $entity_type = $identifier_parts[1];
@@ -210,7 +211,7 @@ class LikeBtn {
           }
         }
 
-        $vote_source = LIKEBTN_VOTING_VOTE_SOURCE;
+        $vote_source = LikebtnInterface::LIKEBTN_VOTING_VOTE_SOURCE;
         if ($field_id) {
           $vote_source = 'field_' . $field_id . '_index_' . $field_index;
         }
