@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Contains Drupal\likebtn\Plugin\Field\FieldWidget\LikebtnFieldWidget.
+ */
+
 namespace Drupal\likebtn\Plugin\Field\FieldWidget;
 
 use Drupal\Core\Field\FieldItemListInterface;
@@ -12,6 +17,7 @@ use Drupal\Core\Form\FormStateInterface;
  *
  * @FieldWidget(
  *   id = "likebtn_default_widget",
+ *   module = "likebtn",
  *   label = @Translation("Like Button"),
  *   field_types = {
  *     "likebtn_field"
@@ -19,7 +25,7 @@ use Drupal\Core\Form\FormStateInterface;
  * )
  */
 class LikebtnFieldWidget extends WidgetBase implements WidgetInterface {
-	public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+  public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
 
-	}
+  }
 }

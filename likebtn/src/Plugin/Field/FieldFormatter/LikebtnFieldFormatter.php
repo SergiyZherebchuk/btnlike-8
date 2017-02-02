@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Contains \Drupal\likebtn\Plugin\Field\FieldFormatter\LikeBtnFieldFormatter.
+ */
+
 namespace Drupal\likebtn\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FormatterBase;

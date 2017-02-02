@@ -1,19 +1,22 @@
 <?php
 
+/**
+ * @file
+ * Contains \Drupal\likebtn\Plugin\Field\FieldType\LikebtnFieldItem.
+ */
+
 namespace Drupal\likebtn\Plugin\Field\FieldType;
 
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\TypedData\DataDefinition;
-use Drupal\likebtn\LikebtnInterface;
 
 /**
- * Plugin implementation of the 'country' field type.
- *
  * @FieldType(
  *   id = "likebtn_field",
  *   label = @Translation("LikeBtn"),
+ *   module = "likebtn",
  *   description = @Translation("Like Button."),
  *   category = @Translation("Custom"),
  *   default_widget = "likebtn_default_widget",
@@ -23,9 +26,9 @@ use Drupal\likebtn\LikebtnInterface;
 class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
 
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['likebtn_likes'] = DataDefinition::create('likebtn_likes');
-    $properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes');
-    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes');
+    $properties['likebtn_likes'] = DataDefinition::create('likebtn_likes')->setDescription(t('Likes count'));
+    $properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes')->setDescription(t('Dislikes count'));
+    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes')->setDescription('Likes minus dislikes');
 
     return $properties;
   }
@@ -39,7 +42,6 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
           'not null'    => FALSE,
           'sortable'    => TRUE,
           'default'     => 0,
-          'description' => 'Likes count',
         ),
         'likebtn_dislikes' => array(
           'type'        => 'int',
@@ -47,7 +49,6 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
           'not null'    => FALSE,
           'sortable'    => TRUE,
           'default'     => 0,
-          'description' => 'Dislikes count',
         ),
         'likebtn_likes_minus_dislikes' => array(
           'type'        => 'int',
@@ -55,7 +56,6 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
           'not null'    => FALSE,
           'sortable'    => TRUE,
           'default'     => 0,
-          'description' => 'Likes minus dislikes',
         ),
       ),
     );
@@ -72,7 +72,7 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
   }
 
   public static function defaultFieldSettings() {
-    $settings = LikebtnInterface::LIKEBTN_SETTINGS;
+    $settings = unserialize(LIKEBTN_SETTINGS);
     foreach ($settings as $option_name => $option_info) {
       $info['likebtn_field']['settings'][$option_name] = $option_info['default'];
       $info['likebtn_field']['instance_settings'][$option_name] = $option_info['default'];
