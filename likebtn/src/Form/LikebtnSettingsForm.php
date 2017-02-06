@@ -23,7 +23,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
   }
 
   public function getFormId() {
-    return 'likebtn-settings';
+    return 'likebtn.settings';
   }
 
   public function buildForm(array $form, FormStateInterface $form_state) {
@@ -609,7 +609,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
 
   protected function likebtn_get_markup($element_name, $element_id, $values = NULL, $wrap = TRUE, $include_entity_data = TRUE) {
     $prepared_settings = array();
-    $config = $this->config('likebtn-settings');
+    $config = $this->config('likebtn.settings');
 
     $likebtn = new LikeBtn();
     $likebtn->runSyncVotes();

@@ -26,9 +26,9 @@ use Drupal\Core\TypedData\DataDefinition;
 class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
 
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['likebtn_likes'] = DataDefinition::create('likebtn_likes')->setDescription(t('Likes count'));
-    $properties['likebtn_dislikes'] = DataDefinition::create('likebtn_dislikes')->setDescription(t('Dislikes count'));
-    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('likebtn_likes_minus_dislikes')->setDescription('Likes minus dislikes');
+    $properties['likebtn_likes'] = DataDefinition::create('integer')->setDescription(t('Likes count'));
+    $properties['likebtn_dislikes'] = DataDefinition::create('integer')->setDescription(t('Dislikes count'));
+    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('integer')->setDescription('Likes minus dislikes');
 
     return $properties;
   }
@@ -62,8 +62,8 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
   }
 
   public function isEmpty() {
-    $field = $this->get('likebtn_field');
-    foreach ($field['settings'] as $field_name => $dummy) {
+    $field = LikebtnFieldItem::getSettings();
+    foreach ($field as $field_name => $dummy) {
       if (!empty($item[$field_name])) {
         return FALSE;
       }
