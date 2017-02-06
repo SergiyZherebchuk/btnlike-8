@@ -223,7 +223,7 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
  * Add comment configuration settings to the edit content type form.
  */
 function likebtn_form_node_type_form_alter(&$form, $form_state) {
-  $config = \Drupal::config('likebtn-settings');
+  $config = \Drupal::config('likebtn.settings');
 
   $form['comment']['likebtn_comments_sort_enabled'] = array(
     '#title' => t('Sort comments by LikeBtn likes/dislikes'),
@@ -255,8 +255,8 @@ function likebtn_form_node_type_form_alter(&$form, $form_state) {
       ),
     ),
     '#options' => array(
-      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC => t('Descending'),
-      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_ASC => t('Ascending')),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC => $this->t('Descending'),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_ASC => $this->t('Ascending')),
     '#default_value' => $config->get('likebtn_comments_sort_order_' . $form['#node_type']->type, LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC),
   );
 }
@@ -372,8 +372,8 @@ function likebtn_field_prepare_view($entity_type, $entities, $field, $instances,
 function likebtn_votingapi_views_formatters($details = array()) {
   if ($details->field == 'value') {
     return array(
-      'likebtn_views_widget_display_only' => t('LikeBtn widget (display only)'),
-      'likebtn_views_widget_full'         => t('LikeBtn widget'),
+      'likebtn_views_widget_display_only' => $this->t('LikeBtn widget (display only)'),
+      'likebtn_views_widget_full'         => $this->t('LikeBtn widget'),
     );
   }
 }

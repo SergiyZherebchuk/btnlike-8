@@ -18,6 +18,13 @@ function likebtn_install() {
 }
 
 /**
+ * Implements hook_uninstall().
+ */
+function likebtn_uninstall() {
+  Drupal::configFactory()->getEditable('likebtn.settings')->delete();
+}
+
+/**
  * Populate vote_source field in votingapi_vote table with like or dislike.
  */
 function likebtn_update_7100() {

@@ -3,31 +3,28 @@
 namespace Drupal\likebtn;
 
 use Drupal\Component\Plugin\Exception;
-/**
- * Created by PhpStorm.
- * User: user
- * Date: 13.01.17
- * Time: 12:56
- */
+
 class LikeBtn {
   protected static $synchronized = FALSE;
   // Cached API request URL.
   protected static $apiurl = '';
-  private $config;
+  public $config;
 
   /**
    * Constructor.
    */
   public function __construct() {
-    $this->config = \Drupal::config('likebtn-settings');
+    $this->config = \Drupal::config('likebtn.settings');
   }
 
   /**
    * Running votes synchronization.
    */
   public function runSyncVotes() {
-    if (!self::$synchronized && $this->config->get('sync.likebtn_account_data_email') && $this->config->get('sync.likebtn_account_data_api_key') && $this->timeToSyncVotes($this->config->get('sync.likebtn_sync_inerval', 60) * 60) && function_exists('curl_init')) {
-
+    if (!self::$synchronized && $this->config->get('sync.likebtn_account_data_email')
+      && $this->config->get('sync.likebtn_account_data_api_key')
+      && $this->timeToSyncVotes($this->config->get('sync.likebtn_sync_inerval') * 60)
+      && function_exists('curl_init')) {
       $this->syncVotes($this->config->get('sync.likebtn_account_data_email'), $this->config->get('sync.likebtn_account_data_api_key'), $this->config->get('sync.likebtn_account_data_site_id'));
     }
   }
@@ -41,7 +38,7 @@ class LikeBtn {
 
     $now = time();
     if (!$last_sync_time) {
-      $this->config->set('sync.likebtn_last_sync_time', $now);
+      $this->config->set('sync.likebtn_last_sync_time') ?: $now;
       self::$synchronized = TRUE;
       return TRUE;
     }
@@ -50,7 +47,7 @@ class LikeBtn {
         return FALSE;
       }
       else {
-        $this->config->set('sync.likebtn_last_sync_time', $now);
+        $this->config->set('sync.likebtn_last_sync_time') ?: $now;
         self::$synchronized = TRUE;
         return TRUE;
       }
@@ -61,11 +58,10 @@ class LikeBtn {
    * Retrieve data.
    */
   public function curl($url) {
-
     $path = drupal_get_path('module', 'likebtn') . '/likebtn.info';
     $info = drupal_parse_info_file($path);
-    $drupal_version = VERSION;
-    $likebtn_version = $info["core"];
+    $drupal_version =
+    $likebtn_version = LikebtnInterface::VERSION;
     $php_version = phpversion();
     $useragent = "Drupal $drupal_version; likebtn module $likebtn_version; PHP $php_version";
 
@@ -78,12 +74,11 @@ class LikeBtn {
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       $result = curl_exec($ch);
       curl_close($ch);
-    }
+			return $result;
+		}
     catch(Exception $e) {
 
     }
-
-    return $result;
   }
 
   /**
@@ -248,7 +243,7 @@ class LikeBtn {
           'entity_id'   => $entity_id,
           'value_type'  => 'points',
           'value'       => $likes,
-          'tag'         => LIKEBTN_VOTING_TAG,
+          'tag'         => LikebtnInterface::LIKEBTN_VOTING_TAG,
           'uid'         => 0,
           'vote_source' => $vote_source,
         );
@@ -257,7 +252,7 @@ class LikeBtn {
           'entity_id'   => $entity_id,
           'value_type'  => 'points',
           'value'       => $dislikes * (-1),
-          'tag'         => LIKEBTN_VOTING_TAG,
+          'tag'         => LikebtnInterface::LIKEBTN_VOTING_TAG,
           'uid'         => 0,
           'vote_source' => $vote_source,
         );
