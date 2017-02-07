@@ -2,7 +2,10 @@
 
 namespace Drupal\likebtn;
 
-use Drupal\Component\Plugin\Exception;
+use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\votingapi\Entity\VoteType;
+use Drupal\Core\Url;
+use Drupal\Component\Utility\UrlHelper;
 
 class LikeBtn {
   protected static $synchronized = FALSE;
@@ -38,7 +41,7 @@ class LikeBtn {
 
     $now = time();
     if (!$last_sync_time) {
-      $this->config->set('sync.likebtn_last_sync_time') ?: $now;
+      $this->config->set('sync.likebtn_last_sync_time', $now);
       self::$synchronized = TRUE;
       return TRUE;
     }
@@ -47,7 +50,7 @@ class LikeBtn {
         return FALSE;
       }
       else {
-        $this->config->set('sync.likebtn_last_sync_time') ?: $now;
+        $this->config->set('sync.likebtn_last_sync_time', $now);
         self::$synchronized = TRUE;
         return TRUE;
       }
@@ -58,10 +61,8 @@ class LikeBtn {
    * Retrieve data.
    */
   public function curl($url) {
-    $path = drupal_get_path('module', 'likebtn') . '/likebtn.info';
-    $info = drupal_parse_info_file($path);
-    $drupal_version =
-    $likebtn_version = LikebtnInterface::VERSION;
+    $drupal_version = \Drupal::VERSION;
+    $likebtn_version = LikebtnInterface::LIKEBTN_VERSION;
     $php_version = phpversion();
     $useragent = "Drupal $drupal_version; likebtn module $likebtn_version; PHP $php_version";
 
@@ -76,7 +77,7 @@ class LikeBtn {
       curl_close($ch);
 			return $result;
 		}
-    catch(Exception $e) {
+    catch(ContextException $e) {
 
     }
   }
@@ -148,230 +149,229 @@ class LikeBtn {
    * Update votes in database from API response.
    */
   public function updateVotes($response) {
-    $votes = array();
+		$votes = array();
 
-    if (!empty($response['response']['items'])) {
-      foreach ($response['response']['items'] as $item) {
+		if (!empty($response['response']['items'])) {
+			foreach ($response['response']['items'] as $item) {
 
-        $entity_type = '';
-        $entity_id = '';
-        $field_id = '';
-        $field_index = 0;
+				$entity_type = '';
+				$entity_id = '';
+				$field_id = '';
+				$field_index = 0;
 
-        // Parse identifier.
-        if (strstr($item['identifier'], '_field_')) {
-          // Item is a field.
-          preg_match('/^(.*)_(\d+)_field_(\d+)(?:_index_(\d+))?$/', $item['identifier'], $identifier_parts);
+				// Parse identifier.
+				if (strstr($item['identifier'], '_field_')) {
+					// Item is a field.
+					preg_match('/^(.*)_(\d+)_field_(\d+)(?:_index_(\d+))?$/', $item['identifier'], $identifier_parts);
 
-          if (!empty($identifier_parts[1])) {
-            $entity_type = $identifier_parts[1];
-          }
-          else {
-            continue;
-          }
+					if (!empty($identifier_parts[1])) {
+						$entity_type = $identifier_parts[1];
+					}
+					else {
+						continue;
+					}
 
-          if (!empty($identifier_parts[2])) {
-            $entity_id = $identifier_parts[2];
-          }
-          else {
-            continue;
-          }
+					if (!empty($identifier_parts[2])) {
+						$entity_id = $identifier_parts[2];
+					}
+					else {
+						continue;
+					}
 
-          if (!empty($identifier_parts[3])) {
-            $field_id = $identifier_parts[3];
-          }
-          else {
-            continue;
-          }
+					if (!empty($identifier_parts[3])) {
+						$field_id = $identifier_parts[3];
+					}
+					else {
+						continue;
+					}
 
-          if (!empty($identifier_parts[4])) {
-            $field_index = $identifier_parts[4];
-          }
-        }
-        else {
-          // Item is an entity.
-          preg_match('/^(.*)_(\d+)$/', $item['identifier'], $identifier_parts);
+					if (!empty($identifier_parts[4])) {
+						$field_index = $identifier_parts[4];
+					}
+				}
+				else {
+					// Item is an entity.
+					preg_match('/^(.*)_(\d+)$/', $item['identifier'], $identifier_parts);
 
-          if (!empty($identifier_parts[1])) {
-            $entity_type = $identifier_parts[1];
-          }
-          else {
-            continue;
-          }
-          if (!empty($identifier_parts[2])) {
-            $entity_id = $identifier_parts[2];
-          }
-          else {
-            continue;
-          }
-        }
+					if (!empty($identifier_parts[1])) {
+						$entity_type = $identifier_parts[1];
+					}
+					else {
+						continue;
+					}
+					if (!empty($identifier_parts[2])) {
+						$entity_id = $identifier_parts[2];
+					}
+					else {
+						continue;
+					}
+				}
 
-        $vote_source = LikebtnInterface::LIKEBTN_VOTING_VOTE_SOURCE;
-        if ($field_id) {
-          $vote_source = 'field_' . $field_id . '_index_' . $field_index;
-        }
-        $likes = 0;
-        if (!empty($item['likes'])) {
-          $likes = $item['likes'];
-        }
-        $dislikes = 0;
-        if (!empty($item['dislikes'])) {
-          $dislikes = $item['dislikes'];
-        }
+				$vote_source = LikebtnInterface::LIKEBTN_VOTING_VOTE_SOURCE;
+				if ($field_id) {
+					$vote_source = 'field_' . $field_id . '_index_' . $field_index;
+				}
+				$likes = 0;
+				if (!empty($item['likes'])) {
+					$likes = $item['likes'];
+				}
+				$dislikes = 0;
+				if (!empty($item['dislikes'])) {
+					$dislikes = $item['dislikes'];
+				}
 
-        // If vote for this entity/field has been already stored - continue.
-        foreach ($votes as $vote) {
-          if ($vote['entity_type'] == $entity_type && $vote['entity_id'] == $entity_id && $vote['vote_source'] == $vote_source) {
-            continue 2;
-          }
-        }
+				// If vote for this entity/field has been already stored - continue.
+				foreach ($votes as $vote) {
+					if ($vote['entity_type'] == $entity_type && $vote['entity_id'] == $entity_id && $vote['vote_source'] == $vote_source) {
+						continue 2;
+					}
+				}
 
-        // Get entity info.
-        try {
-          $entity_type_info = entity_get_info($entity_type);
-          if (empty($entity_type_info['controller class'])) {
-            continue;
-          }
-        }
-        catch(Exception $e) {
-          continue;
-        }
+				// Get entity info.
+				try {
+					$entity_type_info = entity_get_info($entity_type);
+					if (empty($entity_type_info['controller class'])) {
+						continue;
+					}
+				}
+				catch (ContextException $e) {
+					continue;
+				}
 
-        // Likes and Disliked stored in Voting API.
-        $votes[] = array(
-          'entity_type' => $entity_type,
-          'entity_id'   => $entity_id,
-          'value_type'  => 'points',
-          'value'       => $likes,
-          'tag'         => LikebtnInterface::LIKEBTN_VOTING_TAG,
-          'uid'         => 0,
-          'vote_source' => $vote_source,
-        );
-        $votes[] = array(
-          'entity_type' => $entity_type,
-          'entity_id'   => $entity_id,
-          'value_type'  => 'points',
-          'value'       => $dislikes * (-1),
-          'tag'         => LikebtnInterface::LIKEBTN_VOTING_TAG,
-          'uid'         => 0,
-          'vote_source' => $vote_source,
-        );
+				// Likes and Disliked stored in Voting API.
+				$votes[] = array(
+					'entity_type' => $entity_type,
+					'entity_id' => $entity_id,
+					'value_type' => 'points',
+					'value' => $likes,
+					'tag' => LikebtnInterface::LIKEBTN_VOTING_TAG,
+					'uid' => 0,
+					'vote_source' => $vote_source,
+				);
+				$votes[] = array(
+					'entity_type' => $entity_type,
+					'entity_id' => $entity_id,
+					'value_type' => 'points',
+					'value' => $dislikes * (-1),
+					'tag' => LikebtnInterface::LIKEBTN_VOTING_TAG,
+					'uid' => 0,
+					'vote_source' => $vote_source,
+				);
 
-        // Remove (backup) votes cast on this entity by other modules.
-        /*$remove_old_votes_fields = array(
-        'entity_type' => $entity_type . '_backup',
-        );
-        try {
-        \Drupal::database()->update('votingapi_vote')
-        ->fields($remove_old_votes_fields)
-        ->condition('entity_type', $entity_type)
-        ->condition('vote_source', array('like', 'dislike'), 'NOT IN')
-        ->execute();
-        }
-        catch (Exception $e) {}
-        */
+				// Remove (backup) votes cast on this entity by other modules.
+				/*$remove_old_votes_fields = array(
+				'entity_type' => $entity_type . '_backup',
+				);
+				try {
+				\Drupal::database()->update('votingapi_vote')
+				->fields($remove_old_votes_fields)
+				->condition('entity_type', $entity_type)
+				->condition('vote_source', array('like', 'dislike'), 'NOT IN')
+				->execute();
+				}
+				catch (Exception $e) {}
+				*/
 
-        // Remove votes cast on this entity by the previous version
-        // of the plugin, when vote_source was ''
-        /*try {
-        \Drupal::database()->delete('votingapi_vote')
-        ->condition('entity_type', $entity_type)
-        ->condition('entity_id', $entity_id)
-        ->condition('tag', 'vote')
-        ->condition('vote_source', '')
-        ->execute();
-        }
-        catch (Exception $e) {
+				// Remove votes cast on this entity by the previous version
+				// of the plugin, when vote_source was ''
+				/*try {
+				\Drupal::database()->delete('votingapi_vote')
+				->condition('entity_type', $entity_type)
+				->condition('entity_id', $entity_id)
+				->condition('tag', 'vote')
+				->condition('vote_source', '')
+				->execute();
+				}
+				catch (Exception $e) {
 
-        }
-        */
+				}
+				*/
 
-        // Update LikeBtn fields.
-        if ($vote_source) {
-          $entities = entity_load($entity_type, array($entity_id));
-          if (empty($entities[$entity_id])) {
-            continue;
-          }
-          $entity   = $entities[$entity_id];
-          list($tmp_entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
+				// Update LikeBtn fields.
+				if ($vote_source) {
+					$entities = entity_load($entity_type, array($entity_id));
+					if (empty($entities[$entity_id])) {
+						continue;
+					}
+					$entity = $entities[$entity_id];
+					list($tmp_entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
-          // Get entity LikeBtn fields.
-          $entity_fields = field_info_instances($entity_type, $bundle);
+					// Get entity LikeBtn fields.
+					$entity_fields = field_info_instances($entity_type, $bundle);
 
-          // Set field value.
-          $likes_minus_dislikes = $likes - $dislikes;
+					// Set field value.
+					$likes_minus_dislikes = $likes - $dislikes;
 
-          foreach ($entity_fields as $field_name => $field_info) {
-            if ($field_info['widget']['module'] != 'likebtn') {
-              continue;
-            }
+					foreach ($entity_fields as $field_name => $field_info) {
+						if ($field_info['widget']['module'] != 'likebtn') {
+							continue;
+						}
 
-            $field_fields_data = array(
-              'entity_type'         => $entity_type,
-              'bundle'              => $bundle,
-              'entity_id'           => $entity_id,
-              'revision_id'         => $entity_id,
-              'delta'               => $field_index,
-              'language'            => isset($entity->language) ? $entity->language : LANGUAGE_NONE,
-            );
-            $field_fields_data[$field_name . '_likebtn_likes']        = $likes;
-            $field_fields_data[$field_name . '_likebtn_dislikes']     = $dislikes;
-            $field_fields_data[$field_name . '_likebtn_likes_minus_dislikes'] = $likes_minus_dislikes;
+						$field_fields_data = array(
+							'entity_type' => $entity_type,
+							'bundle' => $bundle,
+							'entity_id' => $entity_id,
+							'revision_id' => $entity_id,
+							'delta' => $field_index,
+							'language' => isset($entity->language) ? $entity->language : LANGUAGE_NONE,
+						);
+						$field_fields_data[$field_name . '_likebtn_likes'] = $likes;
+						$field_fields_data[$field_name . '_likebtn_dislikes'] = $dislikes;
+						$field_fields_data[$field_name . '_likebtn_likes_minus_dislikes'] = $likes_minus_dislikes;
 
-            try {
-              // Insert value.
-              \Drupal::database()->insert('field_data_' . $field_name)
-                ->fields($field_fields_data)
-                ->execute();
-            }
-            catch(Exception $e) {
-              // Update value.
-              try {
-                \Drupal::database()->insert('field_data_' . $field_name)
-                  ->fields($field_fields_data)
-                  ->condition('entity_type', $entity_type)
-                  ->condition('bundle', $bundle)
-                  ->condition('entity_id', $entity_id)
-                  ->execute();
-              }
-              catch(Exception $e) {
+						try {
+							// Insert value.
+							\Drupal::database()
+								->insert('field_data_' . $field_name)
+								->fields($field_fields_data)
+								->execute();
+						}
+						catch (Exception $e) {
+							// Update value.
+							try {
+								\Drupal::database()
+									->insert('field_data_' . $field_name)
+									->fields($field_fields_data)
+									->condition('entity_type', $entity_type)
+									->condition('bundle', $bundle)
+									->condition('entity_id', $entity_id)
+									->execute();
+							}
+							catch (Exception $e) {
+							}
+						}
+					}
+				}
+			}
 
-              }
-            }
-          }
-        }
-      }
+			if ($votes) {
+				// Prepare criteria for removing previous vote values.
+				$criteria = array();
+				foreach ($votes as $vote) {
+					$criteria[] = array(
+						'entity_type' => $vote['entity_type'],
+						'entity_id' => $vote['entity_id'],
+						'value_type' => $vote['value_type'],
+						'tag' => $vote['tag'],
+						'uid' => $vote['uid'],
+						'vote_source' => $vote['vote_source'],
+					);
+				}
 
-      if ($votes) {
-        // Prepare criteria for removing previous vote values.
-        $criteria = array();
-        foreach ($votes as $vote) {
-          $criteria[] = array(
-            'entity_type' => $vote['entity_type'],
-            'entity_id'   => $vote['entity_id'],
-            'value_type'  => $vote['value_type'],
-            'tag'         => $vote['tag'],
-            'uid'         => $vote['uid'],
-            'vote_source' => $vote['vote_source'],
-          );
-        }
-        // Votes must be saved altogether.
-        // echo "<pre>";
-        // print_r($votes);
-        // print_r($criteria);
-        // exit();
-        votingapi_set_votes($votes, $criteria);
-        return TRUE;
-      }
-      return FALSE;
-    }
-  }
+				VoteType::create($votes, $criteria);
+
+				votingapi_set_votes($votes, $criteria);
+				return TRUE;
+			}
+			return FALSE;
+		}
+	}
 
   /**
    * Run locales synchronization.
    */
   public function runSyncLocales() {
-    if ($this->timeToSync(LIKEBTN_LOCALES_SYNC_INTERVAL, 'likebtn_last_locale_sync_time') && function_exists('curl_init')) {
+    if ($this->timeToSync(LikebtnInterface::LIKEBTN_LOCALES_SYNC_INTERVAL, 'likebtn_last_locale_sync_time') && function_exists('curl_init')) {
       $this->syncLocales();
     }
   }
@@ -380,7 +380,7 @@ class LikeBtn {
    * Run styles synchronization.
    */
   public function runSyncStyles() {
-    if ($this->timeToSync(LIKEBTN_STYLES_SYNC_INTERVAL, 'likebtn_last_style_sync_time') && function_exists('curl_init')) {
+    if ($this->timeToSync(LikebtnInterface::LIKEBTN_STYLES_SYNC_INTERVAL, 'likebtn_last_style_sync_time') && function_exists('curl_init')) {
       $this->syncStyles();
     }
   }
@@ -390,11 +390,11 @@ class LikeBtn {
    */
   public function timeToSync($sync_period, $sync_variable) {
 
-    $last_sync_time = variable_get($sync_variable, 0);
+    $last_sync_time = $this->config->get($sync_variable) ?: 0;
 
     $now = time();
     if (!$last_sync_time) {
-      variable_set($sync_variable, $now);
+			$this->config->set($sync_variable, $now);
       return TRUE;
     }
     else {
@@ -402,7 +402,7 @@ class LikeBtn {
         return FALSE;
       }
       else {
-        variable_set($sync_variable, $now);
+				$this->config->set($sync_variable, $now);
         return TRUE;
       }
     }
@@ -412,7 +412,7 @@ class LikeBtn {
    * Locales sync function.
    */
   public function syncLocales() {
-    $url = LIKEBTN_API_URL . "?action=locale";
+    $url = LikebtnInterface::LIKEBTN_API_URL . "?action=locale";
 
     $response_string = $this->curl($url);
     $response = $this->jsonDecode($response_string);
@@ -426,7 +426,7 @@ class LikeBtn {
    * Styles sync function.
    */
   public function syncStyles() {
-    $url = LIKEBTN_API_URL . "?action=style";
+    $url = LikebtnInterface::LIKEBTN_API_URL . "?action=style";
 
     $response_string = $this->curl($url);
     $response = $this->jsonDecode($response_string);
@@ -460,13 +460,13 @@ class LikeBtn {
           $domain_site_id = "domain={$local_domain}&";
         }
         elseif ($subdirectory) {
-          $parse_url    = parse_url(url(NULL, array('absolute' => TRUE)));
+          $parse_url    = UrlHelper::parse(Url::fromRoute(NULL, array('absolute' => TRUE)));
           $domain       = $parse_url['host'] . $subdirectory;
           $domain_site_id = "domain={$domain}&";
         }
       }
 
-      self::$apiurl = LIKEBTN_API_URL . "?email={$email}&api_key={$api_key}&nocache=.php&source=drupal&" . $domain_site_id;
+      self::$apiurl = LikebtnInterface::LIKEBTN_API_URL . "?email={$email}&api_key={$api_key}&nocache=.php&source=drupal&" . $domain_site_id;
     }
     $url = self::$apiurl . "action={$action}&" . $request;
 
