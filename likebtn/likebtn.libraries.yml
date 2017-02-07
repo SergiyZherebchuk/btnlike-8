@@ -1,8 +1,9 @@
-likebtn_libraries:
-  version: 1.x
+likebtn-libraries:
+  version: "1.x"
   js:
     https://likebtn.com/en/js/donate_generator.js: { type: external, minified: false }
     https://w.likebtn.com/js/w/widget.js: { type: external, minified: false }
-    assets/js/admin.js: {}
+    js/admin.js: { minified: true }
+    js/widget.js: { minified: true }
   dependencies:
     - core/jquery
