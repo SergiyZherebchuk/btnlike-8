@@ -29,32 +29,32 @@ class LikeBtnController extends ControllerBase {
     );
 
     $result = array(
-      'total_likes_minus_dislikes' => $total_likes_minus_dislikes,
-      'header' => $header,
-      'rows' => $rows
+      '#theme' => 'likebtn_likes_page',
+      '#total_likes_minus_dislikes' => $total_likes_minus_dislikes,
+      '#header' => $header,
+      '#rows' => $rows
     );
 
-    return $result;
+    return render($result);
   }
 
   public function likebtnTestSync () {
+    $likebtn = new LikeBtn();
     $likebtn_account_email = '';
+    $likebtn_account_api_key = '';
+    $likebtn_account_site_id = '';
+
     if (isset($_POST['likebtn_account_email'])) {
       $likebtn_account_email = $_POST['likebtn_account_email'];
     }
 
-    $likebtn_account_api_key = '';
     if (isset($_POST['likebtn_account_api_key'])) {
       $likebtn_account_api_key = $_POST['likebtn_account_api_key'];
     }
 
-    $likebtn_account_site_id = '';
     if (isset($_POST['likebtn_account_site_id'])) {
       $likebtn_account_site_id = $_POST['likebtn_account_site_id'];
     }
-
-    // Run test.
-    $likebtn = new LikeBtn();
 
     $test_response = $likebtn->testSync($likebtn_account_email, $likebtn_account_api_key, $likebtn_account_site_id);
 
