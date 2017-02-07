@@ -5,6 +5,8 @@ namespace Drupal\likebtn\Plugin\Filter;
 use Drupal\filter\Annotation\Filter;
 use Drupal\Core\Annotation\Translation;
 use Drupal\filter\Plugin\FilterBase;
+use Drupal\likebtn\LikebtnInterface;
+use Drupal\likebtn\LikeBtnMarkup;
 
 /**
  * Provides a filter to limit allowed HTML tags.
@@ -23,8 +25,10 @@ use Drupal\filter\Plugin\FilterBase;
  */
 class LikeBtnFilter extends FilterBase {
   public function process($text, $langcode) {
+    $markup_render = new LikeBtnMarkup();
+
     $replacements = array();
-    $regex = '/(?<!\<code\>)\[' . LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
+    $regex = '/(?<!\<code\>)\[' . LikebtnInterface::LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
     preg_match_all($regex, $text, $matches);
 
     if (!empty($matches[1])) {
@@ -44,7 +48,7 @@ class LikeBtnFilter extends FilterBase {
           $settings[$option] = _likebtn_prepare_option($option, $matches_params[2][$matches_params_index]);
         }
 
-        $markup = _likebtn_get_markup('', '', $settings, FALSE, FALSE);
+        $markup = $markup_render->likebtn_get_markup('', '', $settings, FALSE, FALSE);
         $replacements[$index] = $markup;
       }
       $text = preg_replace($regex_list, $replacements, $text, 1);
@@ -57,6 +61,6 @@ class LikeBtnFilter extends FilterBase {
   }
 
   public function tips($long = FALSE) {
-    return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . t('Insert a Like Button using shortcode.');
+    return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . $this->t('Insert a Like Button using shortcode.');
   }
 }
