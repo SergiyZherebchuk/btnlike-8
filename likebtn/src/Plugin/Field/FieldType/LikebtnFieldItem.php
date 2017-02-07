@@ -25,14 +25,24 @@ use Drupal\Core\TypedData\DataDefinition;
  */
 class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
 
+	/**
+	 * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $field_definition
+	 *
+	 * @return mixed
+	 */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     $properties['likebtn_likes'] = DataDefinition::create('integer')->setDescription(t('Likes count'));
     $properties['likebtn_dislikes'] = DataDefinition::create('integer')->setDescription(t('Dislikes count'));
-    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('integer')->setDescription('Likes minus dislikes');
+    $properties['likebtn_likes_minus_dislikes'] = DataDefinition::create('integer')->setDescription(t('Likes minus dislikes'));
 
     return $properties;
   }
 
+	/**
+	 * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $field_definition
+	 *
+	 * @return array
+	 */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     return array(
       'columns' => array(
