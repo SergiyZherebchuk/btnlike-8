@@ -156,6 +156,23 @@ function likebtn_theme($existing, $type, $theme, $path) {
         'rows' => array()
       )
     ),
+    'likebtn_markup' => array(
+      'template' => 'likebtn-markup',
+      'variables' => array(
+        'data' => array(),
+        'aligment' => NULL,
+        'html_before' => NULL,
+        'html_after' => NULL,
+        'subdirectory' => NULL
+      )
+    ),
+    'likebtn_test_sync' => array(
+      'template' => 'likebtn-test-sync',
+      'variables' => array(
+        'subdirectory' => NULL,
+        'public_url' => NULL
+      )
+    )
   );
 }
 
@@ -175,6 +192,7 @@ function likebtn_help($route_name, RouteMatchInterface $route_match) {
  */
 function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
   $config = \Drupal::config('likebtn.settings');
+  $markup_render = new \Drupal\likebtn\LikeBtnMarkup();
 
   if (!in_array($type, array('node', 'comment'))) {
     return;
@@ -212,7 +230,7 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
   }
 
   $entity->content['likebtn_display'] = array(
-    '#markup' => _likebtn_get_markup($type, $entity_id),
+    '#markup' => $markup_render->likebtn_get_markup($type, $entity_id),
     '#weight' => $config->get('likebtn_weight'),
   );
 }
@@ -397,6 +415,8 @@ function likebtn_views_widget_full($value, $field, $columns) {
  */
 function _likebtn_get_views_widget_markup($value, $field, $columns, $mode = LikebtnInterface::LIKEBTN_VIEWS_WIDGET_FULL) {
 
+  $markup_render = new \Drupal\likebtn\LikeBtnMarkup();
+
   $entity_name = $field->view->base_table;
   $base_field  = $field->view->base_field;
   $entity_id   = $columns->$base_field;
@@ -419,7 +439,7 @@ function _likebtn_get_views_widget_markup($value, $field, $columns, $mode = Like
   }
   */
 
-  return _likebtn_get_markup($entity_name, $entity_id, $values);
+  return $markup_render->likebtn_get_markup($entity_name, $entity_id, $values);
 }
 
 /**
@@ -622,53 +642,6 @@ function likebtn_filter_prepare($text, $filter, $format, $langcode, $cache, $cac
 }
 
 /**
- * Process callback for callback_filter_process.
- */
-function likebtn_filter_process($text, $filter, $format, $langcode, $cache, $cache_id) {
-
-  $replacements = array();
-  $regex = '/(?<!\<code\>)\[' . LikebtnInterface::LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
-  preg_match_all($regex, $text, $matches);
-
-  // Found shortcodes.
-  if (!empty($matches[1])) {
-    // Parse options.
-    foreach ($matches[1] as $index => $params_str) {
-      $regex_list[$index] = $regex;
-      $replacements[$index] = '';
-
-      $regex_params = '/(\w+)\s*=\s*\"(.*?)\"/si';
-      preg_match_all($regex_params, $params_str, $matches_params);
-
-      if (!count($matches_params)) {
-        continue;
-      }
-
-      $settings = array();
-      foreach ($matches_params[1] as $matches_params_index => $option) {
-        $settings[$option] = _likebtn_prepare_option($option, $matches_params[2][$matches_params_index]);
-      }
-
-      // Get button markup.
-      $markup = _likebtn_get_markup('', '', $settings, FALSE, FALSE);
-      $replacements[$index] = $markup;
-    }
-
-    $text = preg_replace($regex_list, $replacements, $text, 1);
-  }
-
-  return $text;
-}
-
-/**
- * Tips callback for callback_filter_tips.
- */
-function likebtn_filter_tips($filter, $format, $long) {
-  return '[likebtn identifier="my_button_in_post" style="large" i18n_like="Yeah!"] - ' . t('Insert a Like Button using shortcode.');
-}
-
-
-/**
  * Implements hook_field_widget_info().
  */
 function likebtn_field_widget_info() {
@@ -678,46 +651,4 @@ function likebtn_field_widget_info() {
       'field types' => array('likebtn_field'),
     ),
   );
-}
-
-/**
- * Implements hook_field_formatter_info().
- */
-function likebtn_field_formatter_info() {
-  return array(
-    'default' => array(
-      'label' => t('LikeBtn (default)'),
-      'field types' => array('likebtn_field'),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_formatter_view().
- */
-function likebtn_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $entity_info = entity_get_info($entity_type);
-  $entity_id_key = $entity_info['entity keys']['id'];
-
-  $elements = array();
-  foreach ($items as $delta => $item) {
-    $elements[$delta] = array(
-      '#markup' => _likebtn_get_markup($entity_type, $entity->$entity_id_key . '_field_' . $instance['field_id'] . '_index_' . $delta, _likebtn_flatten_field_instance_settings($instance['settings'])),
-    );
-  }
-
-  return $elements;
-}
-
-/**
- * Implements hook_field_is_empty().
- */
-function likebtn_field_is_empty($item, $field) {
-  $field_info = likebtn_field_info();
-  foreach ($field_info['likebtn_field']['settings'] as $field_name => $dummy) {
-    if (!empty($item[$field_name])) {
-      return FALSE;
-    }
-  }
-  return TRUE;
 }
