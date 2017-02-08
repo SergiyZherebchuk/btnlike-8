@@ -22,10 +22,10 @@ class LikeBtnController extends ControllerBase {
     }
 
     $header = array(
-      t('Button'),
-      t('Likes'),
-      t('Dislikes'),
-      t('Likes minus dislikes'),
+      $this->t('Button'),
+      $this->t('Likes'),
+      $this->t('Dislikes'),
+      $this->t('Likes minus dislikes'),
     );
 
     $result = array(
@@ -79,10 +79,11 @@ class LikeBtnController extends ControllerBase {
    * Get likes and dislikes count for the node.
    */
   private function likebtn_get_count($entity, $entity_type) {
+    $db = \Drupal::database();
     list($entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
     try {
-      $query = db_select('votingapi_vote', 'vv')
+      $query = $db->select('votingapi_vote', 'vv')
         ->fields('vv')
         ->condition('vv.entity_type', $entity_type)
         ->condition('vv.entity_id', $entity_id)
@@ -92,7 +93,7 @@ class LikeBtnController extends ControllerBase {
 
       $votingapi_results = $query->execute();
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       return $e;
     }
 
