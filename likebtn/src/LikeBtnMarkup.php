@@ -26,7 +26,7 @@ class LikeBtnMarkup {
 
     // Website subdirectory.
     if ($config->get('settings.likebtn_settings_subdirectory')) {
-      $data .= ' data-subdirectory="' . $config->get('settings.likebtn_settings_subdirectory') . '" ';
+      $data .= ' data-subdirectory="' . $config->get('settings.likebtn_settings.subdirectory') . '" ';
     }
 
     $data .= ' data-engine="drupal" data-engine_v="' .\Drupal::VERSION . '"';
@@ -34,8 +34,8 @@ class LikeBtnMarkup {
 
     foreach ($settings as $option_name => $option_info) {
       if ($values) {
-        if (isset($values['likebtn_settings_' . $option_name])) {
-          $option_value = $values['likebtn_settings_' . $option_name];
+        if (isset($values['settings.likebtn_settings.' . $option_name])) {
+          $option_value = $values['settings.likebtn_settings.' . $option_name];
         }
         elseif (isset($values[$option_name])) {
           $option_value = $values[$option_name];
@@ -45,14 +45,14 @@ class LikeBtnMarkup {
         }
       }
       else {
-        $option_value = $config->get('likebtn_settings_' . $option_name) ?: array('default' => '');
+        $option_value = $config->get('settings.likebtn_settings.' . $option_name) ?: array('default' => '');
       }
 
       $option_value_prepared = _likebtn_prepare_option($option_name, $option_value);
       $prepared_settings[$option_name] = $option_value_prepared;
 
       // Do not add option if it has default value.
-      if ($option_value !== '' && $option_value != $settings[$option_name]['default']) {
+      if (!is_array($option_value) && $option_value !== '' && $option_value != $settings[$option_name]['default']) {
         $data .= ' data-' . $option_name . '="' . $option_value_prepared . '" ';
       }
     }
@@ -67,11 +67,12 @@ class LikeBtnMarkup {
         $entity_date = '';
 
         // Ignore dummy entity name.
-        if (\Drupal::entityTypeManager()->getDefinition($element_name)) {
+
+        //if (\Drupal::entityTypeManager()->getDefinition($element_name)) {
           // For fields.
-          $parent_entity_id = preg_replace('/_.*/', '', $element_id);
-          $entity_list = \Drupal::entityTypeManager()->getStorage($element_name)->load($parent_entity_id);
-        }
+          //$parent_entity_id = preg_replace('/_.*/', '', $element_id);
+          //$entity_list = \Drupal::entityTypeManager()->getStorage($element_name)->load($parent_entity_id);
+        //}
         if (!empty($entity_list)) {
           $entity = array_shift($entity_list);
         }
