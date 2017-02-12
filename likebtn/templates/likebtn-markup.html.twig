@@ -12,12 +12,11 @@
   <div style="text-align:{{ aligment }}" class="likebtn_container">
     <span class="likebtn-wrapper" {{ data }}></span>
   </div>
-{% endif %}
 {% else %}
   <div class="likebtn_container">
     <span class="likebtn-wrapper" {{ data }}></span>
   </div>
-{% endelse %}
+{% endif %}
 
 {% if html_after %}
   {{ html_after }}
