@@ -1,6 +1,3 @@
-/**
- * Created by znak on 14.01.17.
- */
 (function(d, e, s) {
   a = d.createElement(e);
   m = d.getElementsByTagName(e)[0];
