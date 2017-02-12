@@ -3,11 +3,10 @@
 namespace Drupal\likebtn;
 
 use Drupal\Core\Language\Language;
-use Drupal\votingapi\Entity\Vote;
+use Drupal\Core\Entity\Entity;
 use Drupal\votingapi\Entity\VoteType;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\UrlHelper;
-use Drupal\field\Entity\FieldConfig;
 
 class LikeBtn {
   protected static $synchronized = FALSE;
@@ -151,7 +150,6 @@ class LikeBtn {
    * Update votes in database from API response.
    */
   public function updateVotes($response) {
-    $voting = new VoteType();
     $votes = array();
 
     if (!empty($response['response']['items'])) {
@@ -232,7 +230,7 @@ class LikeBtn {
 
         // Get entity info.
         try {
-          $entity_type_info = \Drupal::entityTypeManager()->getDefinition($entity_type);
+          $entity_type_info = Entity::load($entity_type);
           if (empty($entity_type_info['controller class'])) {
             continue;
           }
@@ -261,38 +259,8 @@ class LikeBtn {
           'vote_source' => $vote_source,
         );
 
-        // Remove (backup) votes cast on this entity by other modules.
-        /*$remove_old_votes_fields = array(
-        'entity_type' => $entity_type . '_backup',
-        );
-        try {
-        \Drupal::database()->update('votingapi_vote')
-        ->fields($remove_old_votes_fields)
-        ->condition('entity_type', $entity_type)
-        ->condition('vote_source', array('like', 'dislike'), 'NOT IN')
-        ->execute();
-        }
-        catch (\Exception $e) {}
-        */
-
-        // Remove votes cast on this entity by the previous version
-        // of the plugin, when vote_source was ''
-        /*try {
-        \Drupal::database()->delete('votingapi_vote')
-        ->condition('entity_type', $entity_type)
-        ->condition('entity_id', $entity_id)
-        ->condition('tag', 'vote')
-        ->condition('vote_source', '')
-        ->execute();
-        }
-        catch (\Exception $e) {
-
-        }
-        */
-
-        // Update LikeBtn fields.
         if ($vote_source) {
-          $entities = \Drupal::entityTypeManager()->getStorage($entity_type)->load($entity_id);
+          $entities = Entity::load($entity_id);
           if (empty($entities[$entity_id])) {
             continue;
           }
@@ -300,7 +268,7 @@ class LikeBtn {
           list($tmp_entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
           // Get entity LikeBtn fields.
-          $entity_fields = FieldConfig::loadByName($entity_type, $bundle);
+          $entity_fields = \Drupal::service('entity_field.manager')->getDefinition($entity_type, $bundle);
 
           // Set field value.
           $likes_minus_dislikes = $likes - $dislikes;
