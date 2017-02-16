@@ -273,8 +273,8 @@ function likebtn_form_node_type_form_alter(&$form, $form_state) {
       ),
     ),
     '#options' => array(
-      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC => $this->t('Descending'),
-      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_ASC => $this->t('Ascending')),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC => t('Descending'),
+      LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_ASC => t('Ascending')),
     '#default_value' => $config->get('likebtn_comments_sort_order_' . $form['#node_type']->type, LikebtnInterface::LIKEBTN_COMMENTS_SORT_ORDER_DESC),
   );
 }

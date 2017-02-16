@@ -359,7 +359,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#states' => array(
         // Disable field.
         'disabled' => array(
-          array(':input[name="likebtn_plan"]' => array('value' => LIKEBTN_PLAN_FREE)),
+          array(':input[name="likebtn_plan"]' => array('value' => LikebtnInterface::LIKEBTN_PLAN_FREE)),
         ),
       ),
     );
@@ -530,10 +530,10 @@ class LikebtnSettingsForm extends ConfigFormBase {
       '#type'        => 'details',
       '#title'       => $this->t('Demo'),
       '#weight'      => 12,
-      '#open'        => FALSE
+      '#open'        => TRUE
     );
 
-    $form['likebtn_demo_fieldset']['likebtn_demo'] = $likebtn_markup->likebtn_get_markup('live_demo', 1, $default_values);
+    $form['likebtn_demo_fieldset']['likebtn_demo'] = $likebtn_markup->likebtn_get_markup('live_demo', 1);
 
     $form['#attached']['library'][] = 'likebtn/likebtn-libraries';
 

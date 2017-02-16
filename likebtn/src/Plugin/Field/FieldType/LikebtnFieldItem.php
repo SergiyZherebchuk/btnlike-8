@@ -11,6 +11,8 @@ use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\likebtn\Form\LikebtnSettingsForm;
 
 /**
  * @FieldType(
@@ -82,12 +84,14 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
   }
 
   public static function defaultFieldSettings() {
+    $fieldSetting = '';
     $settings = unserialize(LIKEBTN_SETTINGS);
+
     foreach ($settings as $option_name => $option_info) {
-      $info['likebtn_field']['settings'][$option_name] = $option_info['default'];
-      $info['likebtn_field']['instance_settings'][$option_name] = $option_info['default'];
+      $fieldSetting['likebtn_field']['settings'][$option_name] = $option_info['default'];
+      $fieldSetting['likebtn_field']['instance_settings'][$option_name] = $option_info['default'];
     }
 
-    return $settings;
+    return $fieldSetting;
   }
 }

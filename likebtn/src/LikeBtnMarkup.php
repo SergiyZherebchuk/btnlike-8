@@ -45,7 +45,7 @@ class LikeBtnMarkup {
         }
       }
       else {
-        $option_value = $config->get('settings.likebtn_settings.' . $option_name) ?: array('default' => '');
+        $option_value = $config->get('settings.likebtn_settings.' . $option_name) ?: '';
       }
 
       $option_value_prepared = _likebtn_prepare_option($option_name, $option_value);

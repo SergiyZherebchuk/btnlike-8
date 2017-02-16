@@ -26,6 +26,7 @@ use Drupal\likebtn\LikeBtnMarkup;
 class LikeBtnFilter extends FilterBase {
   public function process($text, $langcode) {
     $markup_render = new LikeBtnMarkup();
+    $regex_list = '';
 
     $replacements = array();
     $regex = '/(?<!\<code\>)\[' . LikebtnInterface::LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
