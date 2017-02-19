@@ -34,7 +34,7 @@ class LikeBtnMarkup {
 
     foreach ($settings as $option_name => $option_info) {
       if ($values) {
-        if (isset($values['settings.likebtn_settings.' . $option_name])) {
+        if (isset($values[$option_name])) {
           $option_value = $values['settings.likebtn_settings.' . $option_name];
         }
         elseif (isset($values[$option_name])) {

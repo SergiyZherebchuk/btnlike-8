@@ -26,7 +26,7 @@ class LikebtnSettingsForm extends ConfigFormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state) {
-		$likebtn_markup = new LikeBtnMarkup();
+    $likebtn_markup = new LikeBtnMarkup();
     $config = $this->config('likebtn.settings');
     $form = array();
 
