@@ -28,6 +28,7 @@ class GeneralSettingsForm extends ConfigFormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state) {
     $public_url = _likebtn_public_url();
+    $view_modes_options = array();
     $config = $this->config('likebtn.settings');
 
     $form = array();

@@ -142,6 +142,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Component\Utility\Html;
 use Drupal\node\Entity\Node;
 use Drupal\likebtn\LikebtnInterface;
+use Drupal\likebtn\LikeBtnMarkup;
 
 /**
  * Implements hook_theme().
@@ -192,7 +193,7 @@ function likebtn_help($route_name, RouteMatchInterface $route_match) {
  */
 function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
   $config = \Drupal::config('likebtn.settings');
-  $markup_render = new \Drupal\likebtn\LikeBtnMarkup();
+  $markup_render = new LikeBtnMarkup();
 
   if (!in_array($type, array('node', 'comment'))) {
     return;
