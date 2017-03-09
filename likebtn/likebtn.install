@@ -6,15 +6,16 @@
  */
 
 use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\likebtn\LikebtnInterface;
 
 /**
  * Implements hook_install().
  */
 function likebtn_install() {
-  drupal_set_message(t("LikeBtn settings are available under @link",
-    array('@link' => Link::createFromRoute(t('Administration > Web services > LikeBtn configuration'), 'admin/config/services/likebtn'))
-  ));
+  $link = array('@link' => \Drupal::l(t('Administration > Web services > LikeBtn configuration'), Url::fromRoute('likebtn.admin')));
+
+  drupal_set_message(t('LikeBtn settings are available under @link', $link));
 }
 
 /**
