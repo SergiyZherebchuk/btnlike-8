@@ -9,14 +9,15 @@
 namespace Drupal\likebtn\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\likebtn\LikeBtn;
 use Drupal\likebtn\LikebtnInterface;
 use Drupal\likebtn\LikeBtnMarkup;
 
 class LikeBtnController extends ControllerBase {
 
-  function likes($entity, $entity_type) {
-    $rows = $this->likebtn_get_count($entity, $entity_type);
+  public function likes(EntityInterface $entity) {
+    $rows = $this->likebtn_get_count($entity);
     $total_likes_minus_dislikes = 0;
     foreach ($rows as $row) {
       $total_likes_minus_dislikes += $row['likes_minus_dislikes'];
@@ -76,15 +77,14 @@ class LikeBtnController extends ControllerBase {
     echo json_encode($response);
   }
 
-  private function likebtn_get_count($entity, $entity_type) {
+  private function likebtn_get_count(EntityInterface $entity) {
     $db = \Drupal::database();
-    list($entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
     try {
       $query = $db->select('votingapi_vote', 'vv')
         ->fields('vv')
-        ->condition('vv.entity_type', $entity_type)
-        ->condition('vv.entity_id', $entity_id)
+        ->condition('vv.entity_type', $entity->entityType())
+        ->condition('vv.entity_id', $entity->id())
         ->condition('vv.value_type', 'points')
         ->condition('vv.tag', LikebtnInterface::LIKEBTN_VOTING_TAG)
         ->orderBy('vv.vote_source', 'ASC');
@@ -125,7 +125,7 @@ class LikeBtnController extends ControllerBase {
         $likes_minus_dislikes = $likes - $dislikes;
 
         $rows[] = array(
-          'button' => _likebtn_get_name($first_record['vote_source']),
+          'button' => $this->likebtn_get_name($first_record['vote_source']),
           'likes' => $likes,
           'dislikes' => $dislikes,
           'likes_minus_dislikes' => $likes_minus_dislikes,
@@ -166,7 +166,7 @@ class LikeBtnController extends ControllerBase {
       $likebtn_website_locale = 'en';
     }
 
-    $likebtn_settings_lang_options['auto'] = "auto - " . t("Detect from client browser");
+    $likebtn_settings_lang_options['auto'] = "auto - " . $this->t("Detect from client browser");
     $langs = unserialize(LIKEBTN_LANGS);
     foreach ($langs as $lang_code => $lang_name) {
       $likebtn_settings_lang_options[$lang_code] = $lang_name;
@@ -701,5 +701,99 @@ class LikeBtnController extends ControllerBase {
     $form['likebtn_demo_fieldset']['likebtn_demo'] = $likebtn_markup->likebtn_get_markup('live_demo', 1, $default_values);
 
     $form['#attached']['library'][] = 'likebtn/likebtn-libraries';
+
+    return $form;
+  }
+
+  public function likebtn_field_load($field, $item, $instance) {
+    $field_info = likebtn_field_info();
+    $keys = array_keys($field_info['likebtn_field']['settings']);
+    $value = array();
+
+    foreach ($keys as $key) {
+      if (isset($item[$key])) {
+        $value[$key] = $item[$key];
+      }
+      else {
+        // Search for key in instance settings.
+        // We have to come through instance settings as it is 2-dimentional.
+        // array due to form fieldsets.
+        $instance_settings_exists = FALSE;
+        foreach ($instance['settings'] as $instance_settings) {
+          if (is_array($instance_settings)) {
+            foreach ($instance_settings as $instance_settings_key => $instance_settings_value) {
+              if ($instance_settings_key == $key) {
+                $instance_settings_exists = TRUE;
+                break;
+              }
+              if ($instance_settings_exists) {
+                $value[$key] = $instance_settings_value;
+              }
+              else {
+                // New option has not been activated.
+                if (isset($field['settings'][$key])) {
+                  $value[$key] = $field['settings'][$key];
+                }
+                else {
+                  $settings = unserialize(LIKEBTN_SETTINGS);
+                  $value[$key] = $settings[$key]['default'];
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }
+    return $value;
+  }
+
+  public function likebtn_get_name($source) {
+    $name = $source;
+
+    $source_parts = explode('_', $source);
+
+    if ($source_parts[0] != 'field') {
+      $name = t('Like Button');
+    }
+    else {
+      // Get field name.
+      if (!empty($source_parts[1])) {
+
+        $field_info = field_info_field_by_id($source_parts[1]);
+
+        if (isset($field_info['field_name'])) {
+          $name = $this->t('Field') . ': ' . str_replace('field_', '', $field_info['field_name']);
+        }
+
+        if ($name && !empty($source_parts[3])) {
+          $name .= ' (' . $source_parts[3] . ')';
+        }
+      }
+    }
+
+    return $name;
+  }
+
+  public function likebtn_prepare_option($option_name, $option_value) {
+    $settings = unserialize(LIKEBTN_SETTINGS);
+
+    $option_value_prepared = $option_value;
+
+    if (isset($settings[$option_name]) && is_bool($settings[$option_name]['default'])) {
+      if (is_int($option_value)) {
+        if ($option_value) {
+          $option_value_prepared = 'true';
+        }
+        else {
+          $option_value_prepared = 'false';
+        }
+      }
+    }
+
+    // To avoid XSS.
+    $option_value_prepared = htmlspecialchars($option_value_prepared);
+
+    return $option_value_prepared;
   }
 }
