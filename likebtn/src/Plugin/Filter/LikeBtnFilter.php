@@ -5,6 +5,7 @@ namespace Drupal\likebtn\Plugin\Filter;
 use Drupal\filter\Annotation\Filter;
 use Drupal\Core\Annotation\Translation;
 use Drupal\filter\Plugin\FilterBase;
+use Drupal\likebtn\Controller\LikeBtnController;
 use Drupal\likebtn\LikebtnInterface;
 use Drupal\likebtn\LikeBtnMarkup;
 
@@ -27,6 +28,7 @@ class LikeBtnFilter extends FilterBase {
   public function process($text, $langcode) {
     $markup_render = new LikeBtnMarkup();
     $regex_list = '';
+    $controller = new LikeBtnController();
 
     $replacements = array();
     $regex = '/(?<!\<code\>)\[' . LikebtnInterface::LIKEBTN_SHORTCODE . '([^}\n]*?)\](?!\<\/code\>)/is';
@@ -46,7 +48,7 @@ class LikeBtnFilter extends FilterBase {
 
         $settings = array();
         foreach ($matches_params[1] as $matches_params_index => $option) {
-          $settings[$option] = _likebtn_prepare_option($option, $matches_params[2][$matches_params_index]);
+          $settings[$option] = $controller->likebtn_prepare_option($option, $matches_params[2][$matches_params_index]);
         }
 
         $markup = $markup_render->likebtn_get_markup('', '', $settings, FALSE, FALSE);

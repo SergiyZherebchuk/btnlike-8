@@ -3,11 +3,14 @@
 namespace Drupal\likebtn;
 
 use Drupal\Core\Entity\Entity;
+use Drupal\likebtn\Controller\LikeBtnController;
 
 class LikeBtnMarkup {
+
   public function likebtn_get_markup($element_name, $element_id, $values = NULL, $wrap = TRUE, $include_entity_data = TRUE) {
     $prepared_settings = array();
     $config = \Drupal::config('likebtn.settings');
+    $controller = new LikeBtnController();
 
     $likebtn = new LikeBtn();
     $likebtn->runSyncVotes();
@@ -48,7 +51,7 @@ class LikeBtnMarkup {
         $option_value = $config->get('settings.likebtn_settings.' . $option_name) ?: '';
       }
 
-      $option_value_prepared = _likebtn_prepare_option($option_name, $option_value);
+      $option_value_prepared = $controller->likebtn_prepare_option($option_name, $option_value);
       $prepared_settings[$option_name] = $option_value_prepared;
 
       // Do not add option if it has default value.
