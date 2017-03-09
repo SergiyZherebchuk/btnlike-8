@@ -22,14 +22,14 @@ likebtn.testsync:
     _permission: 'administer site configuration'
 
 likebtn.node:
-  path: '/node/{entity_type}/likes'
+  path: '/node/{entity}/likes'
   defaults:
     _controller: 'Drupal\likebtn\Controller\LikeBtnController::likes'
   requirements:
     _permission: 'administer site configuration'
 
 likebtn.comment:
-  path: '/comment/{entity_type}/likes'
+  path: '/comment/{entity}/likes'
   defaults:
     _controller: 'Drupal\likebtn\Controller\LikeBtnController::likes'
   requirements:
