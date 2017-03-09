@@ -41,7 +41,7 @@ class GeneralSettingsForm extends ConfigFormBase {
     }
 
     // Get all available entities view modes.
-    $view_modes = \Drupal::entityTypeManager()->getDefinition('node');
+    $view_modes = \Drupal::service('entity_display.repository')->getViewModes('node');
     foreach ($view_modes as $view_mode_id => $view_mode_info) {
       $view_modes_options[$view_mode_id] = $view_mode_info['label'];
     }
