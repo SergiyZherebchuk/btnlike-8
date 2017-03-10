@@ -143,7 +143,8 @@ use Drupal\Component\Utility\Html;
 use Drupal\node\Entity\Node;
 use Drupal\likebtn\LikebtnInterface;
 use Drupal\likebtn\LikeBtnMarkup;
-use Drupal\likebtn\LikeBtn;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
 
 /**
  * Implements hook_theme().
@@ -192,17 +193,20 @@ function likebtn_help($route_name, RouteMatchInterface $route_match) {
 /**
  * Implements hook_entity_view().
  */
-function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
+function likebtn_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
   $config = \Drupal::config('likebtn.settings');
   $markup_render = new LikeBtnMarkup();
+  $type = $display->getTargetEntityTypeId();
 
   if (!in_array($type, array('node', 'comment'))) {
     return;
   }
 
-  if (!in_array($view_mode, $config->get('likebtn_view_modes', array()), TRUE)) {
+  /*
+  if (!in_array($view_mode, $config->get('likebtn_view_modes') ?: array(), TRUE)) {
     return;
   }
+  */
 
   $user_logged_in = $config->get('likebtn_user_logged_in') ?: 'all';
 
@@ -218,23 +222,31 @@ function likebtn_entity_view($entity, $type, $view_mode, $langcode) {
   if ($type == 'comment') {
     $comment_node = Node::load($entity->id());
     // Check if LikeBtn is enabled for comments to the current node type.
+    /*
     if (!in_array($comment_node->type, $config->get('likebtn_comments_nodetypes') ?: array(), TRUE)) {
       return;
     }
-    $entity_id = $entity->cid;
+    */
+    $entity_id = $entity->id();
   }
   else {
     // Check if LikeBtn is enabled for the current node type.
-    if (!in_array($entity->type, $config->get('likebtn_nodetypes') ?: array(), TRUE)) {
+    /*
+    if (!in_array($entity->getEntityType(), $config->get('likebtn_nodetypes') ?: array(), TRUE)) {
       return;
     }
-    $entity_id = $entity->nid;
+    */
+    $entity_id = $entity->id();
   }
 
-  $entity->content['likebtn_display'] = array(
+  $build['likebtn_display'] = array(
     '#markup' => $markup_render->likebtn_get_markup($type, $entity_id),
-    '#weight' => $config->get('likebtn_weight'),
+    '#weight' => $config->get('general.likebtn_weight'),
   );
+
+  $build['#attached']['library'][] = 'likebtn/likebtn-libraries';
+
+  return 0;
 }
 
 /**
