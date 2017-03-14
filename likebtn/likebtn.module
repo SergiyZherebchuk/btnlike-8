@@ -197,18 +197,17 @@ function likebtn_entity_view(array &$build, EntityInterface $entity, EntityViewD
   $config = \Drupal::config('likebtn.settings');
   $markup_render = new LikeBtnMarkup();
   $type = $display->getTargetEntityTypeId();
+  $view_mode = $display->getOriginalMode();
 
   if (!in_array($type, array('node', 'comment'))) {
     return;
   }
 
-  /*
-  if (!in_array($view_mode, $config->get('likebtn_view_modes') ?: array(), TRUE)) {
+  if (!in_array($view_mode, array_keys($config->get('general.likebtn_view_modes')) ?: array(), TRUE)) {
     return;
   }
-  */
 
-  $user_logged_in = $config->get('likebtn_user_logged_in') ?: 'all';
+  $user_logged_in = $config->get('general.likebtn_user_logged_in') ?: 'all';
 
   if ($user_logged_in != 'all') {
     if ($user_logged_in == 'logged_in' && !\Drupal::currentUser()->isAuthenticated()) {
@@ -222,31 +221,24 @@ function likebtn_entity_view(array &$build, EntityInterface $entity, EntityViewD
   if ($type == 'comment') {
     $comment_node = Node::load($entity->id());
     // Check if LikeBtn is enabled for comments to the current node type.
-    /*
-    if (!in_array($comment_node->type, $config->get('likebtn_comments_nodetypes') ?: array(), TRUE)) {
+
+    if (!in_array($comment_node->getType(), $config->get('general.likebtn_comments_nodetypes') ?: array(), TRUE)) {
       return;
     }
-    */
     $entity_id = $entity->id();
   }
   else {
     // Check if LikeBtn is enabled for the current node type.
-    /*
-    if (!in_array($entity->getEntityType(), $config->get('likebtn_nodetypes') ?: array(), TRUE)) {
+
+    if (!in_array($display->getTargetBundle(), $config->get('general.likebtn_nodetypes') ?: array(), TRUE)) {
       return;
     }
-    */
     $entity_id = $entity->id();
   }
 
-  $build['likebtn_display'] = array(
-    '#markup' => $markup_render->likebtn_get_markup($type, $entity_id),
-    '#weight' => $config->get('general.likebtn_weight'),
-  );
+  $build['likebtn_display'] = $markup_render->likebtn_get_markup($type, $entity_id);
 
   $build['#attached']['library'][] = 'likebtn/likebtn-libraries';
-
-  return 0;
 }
 
 /**
@@ -367,17 +359,5 @@ function likebtn_votingapi_metadata_alter(&$data) {
     'name' => LikebtnInterface::LIKEBTN_VOTING_TAG,
     'description' => 'LikeBtn',
     'module' => 'likebtn',
-  );
-}
-
-/**
- * Implements hook_field_widget_info().
- */
-function likebtn_field_widget_info() {
-  return array(
-    'likebtn_default_widget' => array(
-      'label'       => 'Like Button',
-      'field types' => array('likebtn_field'),
-    ),
   );
 }
