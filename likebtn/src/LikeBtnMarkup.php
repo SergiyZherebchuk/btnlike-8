@@ -69,13 +69,6 @@ class LikeBtnMarkup {
         $entity_title = '';
         $entity_date = '';
 
-        // Ignore dummy entity name.
-
-        //if (\Drupal::entityTypeManager()->getDefinition($element_name)) {
-          // For fields.
-          //$parent_entity_id = preg_replace('/_.*/', '', $element_id);
-          //$entity_list = \Drupal::entityTypeManager()->getStorage($element_name)->load($parent_entity_id);
-        //}
         if (!empty($entity_list)) {
           $entity = array_shift($entity_list);
         }
