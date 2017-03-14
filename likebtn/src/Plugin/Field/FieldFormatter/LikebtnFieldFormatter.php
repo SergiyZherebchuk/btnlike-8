@@ -32,13 +32,14 @@ class LikeBtnFieldFormatter extends FormatterBase {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    //$id = $items->getFieldDefinition()->id();
-    //$entity_info = Entity::load($id);
     $markup_render = new LikeBtnMarkup();
-
+    $instance = $this->getFieldSettings();
+    $entity = $items->getEntity();
+    $controller = new LikeBtnController();
     $elements = array();
+
     foreach ($items as $delta => $item) {
-      $elements[$delta] = $markup_render->likebtn_get_markup('node', 'articles' . '_field_' . 12 . '_index_' . $delta, _likebtn_flatten_field_instance_settings(unserialize(LikebtnInterface::LIKEBTN_SETTINGS)));
+      $elements[$delta] = $markup_render->likebtn_get_markup($entity->getEntityType(), $entity->getEntityTypeId() . '_field_' . $instance->id() . '_index_' . $delta, $controller->likebtn_flatten_field_instance_settings($instance['settings']));
     }
 
     return $elements;
