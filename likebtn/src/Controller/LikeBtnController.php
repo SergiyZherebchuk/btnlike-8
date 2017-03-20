@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\likebtn\LikeBtn;
 use Drupal\likebtn\LikebtnInterface;
 use Drupal\likebtn\LikeBtnMarkup;
+use Symfony\Component\HttpFoundation\Response;
 
 class LikeBtnController extends ControllerBase {
 
@@ -74,7 +75,8 @@ class LikeBtnController extends ControllerBase {
     );
 
     ob_clean();
-    echo json_encode($response);
+    $resp = json_encode($response);
+    return new Response($resp);
   }
 
   private function likebtn_get_count(EntityInterface $entity) {

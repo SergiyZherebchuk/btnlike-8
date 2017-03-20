@@ -5,7 +5,6 @@ core: 8.x
 version: '8.x-2.x-dev'
 package: 'Voting'
 configure: likebtn.admin
-libraries: likebtn/likebtn-libraries
 
 dependencies:
   - field

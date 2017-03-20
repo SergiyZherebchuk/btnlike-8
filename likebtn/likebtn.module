@@ -172,7 +172,6 @@ function likebtn_theme($existing, $type, $theme, $path) {
     'likebtn_test_sync' => array(
       'template' => 'likebtn-test-sync',
       'variables' => array(
-        'subdirectory' => NULL,
         'public_url' => NULL
       )
     )

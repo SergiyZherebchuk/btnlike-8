@@ -204,13 +204,7 @@ class GeneralSettingsForm extends ConfigFormBase {
 
     $form['likebtn_sync']['likebtn_test_sync'] = array(
       '#theme' => 'likebtn_test_sync',
-      '#subdirectory' => _likebtn_subdirectory(),
       '#public_url' => $public_url,
-      '#attached' => array(
-        'library' => array(
-          'likebtn/likebtn-libraries',
-        ),
-      ),
     );
 
     $form['likebtn_settings_local_domain'] = array(
@@ -226,6 +220,8 @@ class GeneralSettingsForm extends ConfigFormBase {
       '#description'   => $this->t('If your website is one of websites located in different subdirectories of one domain and you want to have a statistics separate from other websites on this domain, enter subdirectory (for example /subdirectory/).'),
       '#default_value' => $config->get('general.likebtn_settings_subdirectory'),
     );
+
+    $form['#attached']['library'][] = 'likebtn/likebtn-libraries';
 
     return parent::buildForm($form, $form_state);
   }
