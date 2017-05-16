@@ -8,16 +8,29 @@
 
 namespace Drupal\likebtn\Controller;
 
+use Drupal\comment\Entity\Comment;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\likebtn\LikeBtn;
 use Drupal\likebtn\LikebtnInterface;
 use Drupal\likebtn\LikeBtnMarkup;
+use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\Response;
 
 class LikeBtnController extends ControllerBase {
 
-  public function likes(EntityInterface $entity) {
+  public function nodeLikes($node) {
+    $my_entity = Node::load($node);
+    return $this->likes($my_entity);
+  }
+
+  public function commentLikes($node) {
+    $my_entity = Comment::load($node);
+    return $this->likes($my_entity);
+  }
+
+  public function likes($entity) {
     $rows = $this->likebtn_get_count($entity);
     $total_likes_minus_dislikes = 0;
     foreach ($rows as $row) {
@@ -38,7 +51,7 @@ class LikeBtnController extends ControllerBase {
       '#rows' => $rows
     );
 
-    return render($result);
+    return $result;
   }
 
   public function likebtnTestSync () {
@@ -85,10 +98,10 @@ class LikeBtnController extends ControllerBase {
     try {
       $query = $db->select('votingapi_vote', 'vv')
         ->fields('vv')
-        ->condition('vv.entity_type', $entity->entityType())
+        ->condition('vv.entity_type', $entity->getEntityTypeId())
         ->condition('vv.entity_id', $entity->id())
         ->condition('vv.value_type', 'points')
-        ->condition('vv.tag', LikebtnInterface::LIKEBTN_VOTING_TAG)
+        ->condition('vv.type', LikebtnInterface::LIKEBTN_VOTING_TAG)
         ->orderBy('vv.vote_source', 'ASC');
 
       $votingapi_results = $query->execute();
