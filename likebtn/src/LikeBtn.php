@@ -18,18 +18,18 @@ class LikeBtn {
    * Constructor.
    */
   public function __construct() {
-    $this->config = \Drupal::config('likebtn.settings');
+    $this->config = \Drupal::service('config.factory')->getEditable('likebtn.settings');
   }
 
   /**
    * Running votes synchronization.
    */
   public function runSyncVotes() {
-    if (!self::$synchronized && $this->config->get('sync.likebtn_account_data_email')
-      && $this->config->get('sync.likebtn_account_data_api_key')
-      && $this->timeToSyncVotes($this->config->get('sync.likebtn_sync_inerval') * 60)
+    if (!self::$synchronized && $this->config->get('general.likebtn_account_data_email')
+      && $this->config->get('general.likebtn_account_data_api_key')
+      && $this->timeToSyncVotes($this->config->get('general.likebtn_sync_inerval') )
       && function_exists('curl_init')) {
-      $this->syncVotes($this->config->get('sync.likebtn_account_data_email'), $this->config->get('sync.likebtn_account_data_api_key'), $this->config->get('sync.likebtn_account_data_site_id'));
+      $this->syncVotes($this->config->get('general.likebtn_account_data_email'), $this->config->get('general.likebtn_account_data_api_key'), $this->config->get('general.likebtn_account_data_site_id'));
     }
   }
 
@@ -38,11 +38,11 @@ class LikeBtn {
    */
   public function timeToSyncVotes($sync_period) {
 
-    $last_sync_time = $this->config->get('sync.likebtn_last_sync_time');
+    $last_sync_time = $this->config->get('settings.sync.likebtn_last_sync_time');
 
     $now = time();
     if (!$last_sync_time) {
-      $this->config->set('sync.likebtn_last_sync_time', $now);
+      $this->config->set('settings.sync.likebtn_last_sync_time', $now)->save();
       self::$synchronized = TRUE;
       return TRUE;
     }
@@ -51,7 +51,7 @@ class LikeBtn {
         return FALSE;
       }
       else {
-        $this->config->set('sync.likebtn_last_sync_time', $now);
+        $this->config->set('settings.sync.likebtn_last_sync_time', $now)->save();
         self::$synchronized = TRUE;
         return TRUE;
       }
@@ -89,12 +89,12 @@ class LikeBtn {
   public function syncVotes($email = '', $api_key = '', $site_id = '') {
     $sync_result = TRUE;
 
-    $last_sync_time = number_format($this->config->get('sync.likebtn_last_sync_time'), 0, '', '');
+    $last_sync_time = number_format($this->config->get('settings.sync.likebtn_last_sync_time'), 0, '', '');
 
     $updated_after = '';
 
-    if ($this->config->get('sync.likebtn_last_successfull_sync_time')) {
-      $updated_after = $this->config->get('sync.likebtn_last_successfull_sync_time') - LikebtnInterface::LIKEBTN_LAST_SUCCESSFULL_SYNC_TIME_OFFSET;
+    if ($this->config->get('settings.sync.likebtn_last_successfull_sync_time')) {
+      $updated_after = $this->config->get('settings.sync.likebtn_last_successfull_sync_time') - LikebtnInterface::LIKEBTN_LAST_SUCCESSFULL_SYNC_TIME_OFFSET;
     }
 
     $url = "output=json&last_sync_time=" . $last_sync_time;
@@ -122,7 +122,7 @@ class LikeBtn {
     }
 
     if ($sync_result) {
-      $this->config->set('sync.likebtn_last_successfull_sync_time', $last_sync_time);
+      $this->config->set('settings.sync.likebtn_last_successfull_sync_time', $last_sync_time)->save();
     }
   }
 
@@ -191,6 +191,7 @@ class LikeBtn {
           }
         }
         else {
+          $item['identifier'] = "node_1"; /** in works */
           // Item is an entity.
           preg_match('/^(.*)_(\d+)$/', $item['identifier'], $identifier_parts);
 
@@ -268,7 +269,7 @@ class LikeBtn {
           list($tmp_entity_id, $entity_revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
           // Get entity LikeBtn fields.
-          $entity_fields = \Drupal::service('entity_field.manager')->getDefinition($entity_type, $bundle);
+          $entity_fields = \Drupal::service('entity_field.manager')->getDefinition($entity_type, $entity->entityType(), $entity->id());
 
           // Set field value.
           $likes_minus_dislikes = $likes - $dislikes;
@@ -334,7 +335,7 @@ class LikeBtn {
           );
         }
 
-        VoteType::create($votes, $criteria);
+        votingapi_set_votes($votes, $criteria);
         return TRUE;
       }
       return FALSE;
@@ -368,7 +369,7 @@ class LikeBtn {
 
     $now = time();
     if (!$last_sync_time) {
-      $this->config->set($sync_variable, $now);
+      $this->config->set($sync_variable, $now)->save();
       return TRUE;
     }
     else {
@@ -376,7 +377,7 @@ class LikeBtn {
         return FALSE;
       }
       else {
-        $this->config->set($sync_variable, $now);
+        $this->config->set($sync_variable, $now)->save();
         return TRUE;
       }
     }
@@ -392,7 +393,7 @@ class LikeBtn {
     $response = $this->jsonDecode($response_string);
 
     if (isset($response['result']) && $response['result'] == 'success' && isset($response['response']) && count($response['response'])) {
-      $this->config->set('sync.likebtn_locales', $response['response']);
+      $this->config->set('sync.likebtn_locales', $response['response'])->save();
     }
   }
 
@@ -406,7 +407,7 @@ class LikeBtn {
     $response = $this->jsonDecode($response_string);
 
     if (isset($response['result']) && $response['result'] == 'success' && isset($response['response']) && count($response['response'])) {
-      $this->config->set('sync.likebtn_styles', $response['response']);
+      $this->config->set('sync.likebtn_styles', $response['response'])->save();
     }
   }
 

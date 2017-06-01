@@ -10,6 +10,7 @@ namespace Drupal\likebtn\Plugin\Field\FieldFormatter;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\FormatterInterface;
 use Drupal\Core\Field\FormStateInterface;
 use Drupal\likebtn\Controller\LikeBtnController;
 use Drupal\likebtn\LikebtnInterface;
@@ -26,7 +27,7 @@ use Drupal\likebtn\LikeBtnMarkup;
  *   },
  * )
  */
-class LikeBtnFieldFormatter extends FormatterBase {
+class LikeBtnFieldFormatter extends FormatterBase implements FormatterInterface {
 
   /**
    * {@inheritdoc}

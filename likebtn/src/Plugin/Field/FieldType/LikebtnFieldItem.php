@@ -96,7 +96,7 @@ class LikebtnFieldItem extends FieldItemBase implements FieldItemInterface {
 
   public function fieldSettingsForm(array $form, FormStateInterface $form_state) {
     $controller = new LikeBtnController();
-    $form = $controller->likebtn_settings_form($controller->likebtn_flatten_field_instance_settings($this->getSettings()));
+    $form = $controller->likebtn_settings_form($controller->likebtn_flatten_field_instance_settings(LikebtnFieldItem::getSettings()));
 
     return $form;
   }

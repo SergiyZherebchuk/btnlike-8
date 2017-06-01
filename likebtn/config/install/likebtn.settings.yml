@@ -52,7 +52,6 @@ settings:
     i18n_popup_text: NULL
   sync:
     likebtn_last_sync_time: 0
-    likebtn_last_sync_time: 0
     likebtn_last_successfull_sync_time: 0
     likebtn_sync_inerval: 60
 
